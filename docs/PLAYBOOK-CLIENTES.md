@@ -59,12 +59,16 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
    inequívoco. **Regla a futuro**: una migración, un timestamp — si dos se crean
    el mismo día, se diferencian en el sufijo, nunca se repiten.
 
-2. **Separar catálogo de datos de demostración.** `supabase/seed.sql` mezcla el
-   catálogo que todo cliente necesita (los 7 ejes) con datos ficticios
-   (organización demo, sitio Planta Bogotá, indicadores de ejemplo). Un cliente
-   productivo no puede recibir eso. Dividir en:
-   - `seed_catalogo.sql` — ejes, unidades, taxonomía de causas. **Siempre.**
-   - `seed_demo.sql` — organización y datos de ejemplo. **Solo en demos.**
+2. ~~**Separar catálogo de datos de demostración.**~~ **Resuelto.** `seed.sql`
+   mezclaba el catálogo que todo cliente necesita (los 7 ejes) con datos
+   ficticios (organización demo, sitio Planta Bogotá, indicadores de ejemplo).
+   Se dividió en:
+   - `seed_catalogo.sql` — los 7 ejes. **Siempre**, en toda instancia.
+   - `seed_demo.sql` — organización y datos de ejemplo. **Solo en demos o
+     formación**, nunca en la instancia productiva de un cliente.
+
+   (Unidades y taxonomía de causas ya vivían en migraciones, no en el seed —
+   no requirieron cambio.)
 
 3. **Aprovisionamiento por CLI, no por SQL Editor.** Correr 53 archivos a mano
    en el panel es aceptable una vez; en cada cliente es una fuente garantizada de

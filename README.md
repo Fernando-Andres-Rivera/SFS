@@ -96,7 +96,8 @@ src/
 supabase/
   migrations/     esquema SQL + políticas RLS (orden cronológico por nombre)
   functions/      Edge Functions: invite-user, create/delete-demo-signup
-  seed.sql        catálogo de ejes y datos de demostración
+  seed_catalogo.sql   catálogo de ejes — se carga en toda instancia
+  seed_demo.sql       organización y datos de ejemplo — solo demo/formación
 ```
 
 Convención: cada feature agrupa página, acceso a datos (`*Api.ts`) y estilos.
@@ -108,12 +109,17 @@ Las consultas de tableros van por lote (sin N+1) y se apoyan en la vista
 ### 1. Base de datos
 
 En el **SQL Editor** de Supabase, corre en orden de nombre de archivo todo
-`supabase/migrations/*.sql` y luego `supabase/seed.sql`.
+`supabase/migrations/*.sql` y luego `supabase/seed_catalogo.sql` (los 7 ejes;
+sin esto la app no tiene tableros ni permite crear indicadores).
 
 Los timestamps son únicos, así que ordenar por nombre da un orden de aplicación
 inequívoco. No los renumeres ni los reordenes: hay dependencias entre migraciones
 (por ejemplo, `quick_win_level_escalation` modifica lo que crea
 `quick_win_boards`).
+
+`supabase/seed_demo.sql` agrega una organización y datos de ejemplo encima del
+catálogo. **Solo para entornos de demostración o formación** — nunca en la
+instancia productiva de un cliente.
 
 ### 2. Variables de entorno
 

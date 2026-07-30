@@ -1,22 +1,10 @@
 -- ============================================================
--- SFS — Datos semilla de demostración
--- 1 organización, 1 sitio, 7 ejes, indicadores en cascada
--- (Nivel 1 -> Nivel 2 -> Nivel 3) para el eje Seguridad,
--- más un indicador de ejemplo en cada uno de los otros ejes.
+-- SFS - Datos de demostracion
+-- Organizacion demo, sitio, indicadores en cascada y metas.
+-- SOLO para entornos de demostracion, formacion o pruebas.
+-- NUNCA en la instancia productiva de un cliente.
+-- Requiere haber cargado antes seed_catalogo.sql.
 -- ============================================================
-
--- ------------------------------------------------------------
--- Catálogo de ejes (compartido entre todos los tenants)
--- ------------------------------------------------------------
-insert into axes (id, code, name, color, icon, sort_order) values
-  ('a0000000-0000-0000-0000-000000000001', 'seguridad',     'Seguridad',      '#F57C00', 'shield',     1),
-  ('a0000000-0000-0000-0000-000000000002', 'mantenimiento', 'Mantenimiento',  '#1B365D', 'wrench',     2),
-  ('a0000000-0000-0000-0000-000000000003', 'calidad',       'Calidad',        '#26A69A', 'check-circle',3),
-  ('a0000000-0000-0000-0000-000000000004', 'disponibilidad','Disponibilidad', '#1B365D', 'activity',   4),
-  ('a0000000-0000-0000-0000-000000000005', 'costos',        'Costos',         '#F57C00', 'dollar-sign',5),
-  ('a0000000-0000-0000-0000-000000000006', 'estandar',      'Estándar',       '#B0B6BD', 'list-checks',6),
-  ('a0000000-0000-0000-0000-000000000007', 'personas',      'Personas',       '#26A69A', 'users',      7)
-on conflict (id) do nothing;
 
 -- ------------------------------------------------------------
 -- Organización demo + sitio

@@ -75,7 +75,9 @@ cambio con un cliente antes de publicarlo.
 Las migraciones en `supabase/migrations/` se corren manualmente en el **SQL
 Editor** de Supabase (no las aplica Vercel). El orden es por fecha en el nombre
 del archivo. Al montar un entorno nuevo desde cero, se corren en ese orden, más
-`supabase/seed.sql` para el catálogo de ejes.
+`supabase/seed_catalogo.sql` para el catálogo de ejes (estructural, en toda
+instancia). `supabase/seed_demo.sql` es aparte y **solo** para entornos de
+demostración o formación — nunca en la instancia productiva de un cliente.
 
 ---
 
