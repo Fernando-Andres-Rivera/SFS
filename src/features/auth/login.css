@@ -1,0 +1,542 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* ---- Portada: la cascada diaria de reuniones por niveles ---- */
+
+.login-hero {
+  position: relative;
+  flex: 1.6 1 0;
+  overflow: hidden;
+  background: #0a1626;
+}
+
+.login-hero__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 72%;
+  transform: scale(1.08);
+  animation: loginCascadeZoom 18s ease-in-out infinite;
+}
+
+/*
+ * Recorre las 3 plataformas de la imagen en el mismo orden en que ocurre la
+ * cascada real: Nivel 1 (operativa, abajo) -> Nivel 2 (supervisión, en medio)
+ * -> Nivel 3 (dirección, arriba). object-position mueve el foco; el scale
+ * acompaña con un leve acercamiento — así "primero se agranda la reunión de
+ * nivel 1, luego el zoom a la de nivel 2 y luego a la de nivel 3".
+ */
+@keyframes loginCascadeZoom {
+  0%,
+  19% {
+    object-position: 50% 72%;
+    transform: scale(1.08);
+  }
+  33%,
+  53% {
+    object-position: 50% 46%;
+    transform: scale(1.16);
+  }
+  67%,
+  86% {
+    object-position: 50% 20%;
+    transform: scale(1.1);
+  }
+  100% {
+    object-position: 50% 72%;
+    transform: scale(1.08);
+  }
+}
+
+.login-hero__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 16, 32, 0.6) 0%,
+    rgba(8, 16, 32, 0.05) 24%,
+    rgba(8, 16, 32, 0.05) 60%,
+    rgba(8, 16, 32, 0.8) 100%
+  );
+  pointer-events: none;
+}
+
+.login-hero__captions {
+  position: absolute;
+  left: 36px;
+  right: 36px;
+  bottom: 32px;
+  z-index: 2;
+  min-height: 86px;
+}
+
+.login-hero__caption {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.login-hero__caption-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(38, 166, 154, 0.2);
+  border: 1px solid rgba(38, 166, 154, 0.45);
+  color: var(--color-teal);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Punto "en vivo" — hace que la reunión de la portada se sienta en curso. */
+.login-hero__caption-tag::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-teal);
+  margin-right: 7px;
+  animation: login-live-pulse 1.8s ease-out infinite;
+}
+
+@keyframes login-live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(38, 166, 154, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(38, 166, 154, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(38, 166, 154, 0);
+  }
+}
+
+/* El rótulo pasó de ser una frase explicativa a el nombre de quién se reúne;
+   como nombre necesita peso de título, no de párrafo. */
+.login-hero__caption p {
+  margin: 0;
+  max-width: 480px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  color: white;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+}
+
+.login-hero__caption--1 {
+  animation: loginCaption1 18s ease-in-out infinite;
+}
+
+.login-hero__caption--2 {
+  animation: loginCaption2 18s ease-in-out infinite;
+}
+
+.login-hero__caption--3 {
+  animation: loginCaption3 18s ease-in-out infinite;
+}
+
+@keyframes loginCaption1 {
+  0%,
+  14% {
+    opacity: 1;
+  }
+  22%,
+  92% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes loginCaption2 {
+  0%,
+  27% {
+    opacity: 0;
+  }
+  33%,
+  48% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes loginCaption3 {
+  0%,
+  61% {
+    opacity: 0;
+  }
+  67%,
+  82% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- Panel de acceso ---- */
+
+.login-panel {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  /* Velo de marca en las esquinas — evita el blanco plano y lo empata con el
+     fondo del interior de la app. */
+  background:
+    radial-gradient(720px 380px at 100% 0%, rgba(38, 166, 154, 0.05), transparent 62%),
+    radial-gradient(720px 420px at 0% 100%, rgba(27, 54, 93, 0.05), transparent 60%),
+    var(--color-surface);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  animation: lpms-fade-up 0.6s var(--ease-out) 0.14s both;
+}
+
+/* ---- Marca: logo + nombre completo del sistema, sobre fondo claro ---- */
+
+/* ---- Logo chico, esquina superior derecha del panel ---- */
+
+.login-brand-mini {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: lpms-fade-up 0.5s var(--ease-out) both;
+}
+
+.login-brand-mini__bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.login-brand-mini__bar {
+  width: 5px;
+  border-radius: 2px 2px 0 0;
+}
+
+.login-brand-mini__bar--1 {
+  height: 38%;
+  background: #9ca6b4;
+}
+
+.login-brand-mini__bar--2 {
+  height: 60%;
+  background: #c7cdd6;
+}
+
+.login-brand-mini__bar--3 {
+  height: 80%;
+  background: #dde2e8;
+}
+
+.login-brand-mini__bar--4 {
+  height: 100%;
+  background: var(--color-teal);
+}
+
+.login-brand-mini__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.login-brand-mini__wordmark {
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.login-brand-mini__lean-pro {
+  color: var(--color-primary);
+}
+
+.login-brand-mini__logistic {
+  color: var(--color-teal);
+}
+
+.login-brand-mini__sas {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+/* ---- LPMS, centrado y prominente ---- */
+
+.login-product-central {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 30px;
+  animation: lpms-fade-up 0.6s var(--ease-out) 0.06s both;
+}
+
+/* Acento de marca entre el nombre del sistema y el formulario. */
+.login-product-central::after {
+  content: '';
+  width: 54px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--grad-teal);
+  margin-top: 18px;
+}
+
+.login-product-central__name {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.login-product-central__tagline {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.login-card__title {
+  font-size: 1.4rem;
+}
+
+.login-card__subtitle {
+  color: var(--color-text-muted);
+  margin: 6px 0 28px;
+  font-size: 0.9rem;
+}
+
+.login-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+
+.login-input {
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+}
+
+.login-input:focus {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 1px;
+}
+
+.login-button {
+  background: var(--grad-teal);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  margin-top: 8px;
+  box-shadow: 0 10px 22px -10px rgba(38, 166, 154, 0.85);
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px -10px rgba(38, 166, 154, 0.95);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+.login-button--link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.turnstile-widget {
+  margin: 4px 0 16px;
+}
+
+.login-error {
+  color: var(--color-fail);
+  font-size: 0.85rem;
+  margin: -8px 0 12px;
+}
+
+.login-success {
+  color: var(--color-ok);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: -8px 0 12px;
+}
+
+.login-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  align-items: flex-start;
+}
+
+.login-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-teal);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Franja de valor al pie del panel — llena el espacio con propósito. */
+.login-foot {
+  position: absolute;
+  bottom: 26px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+  animation: lpms-fade-in 0.9s ease 0.4s both;
+}
+
+.login-foot__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-teal);
+  opacity: 0.75;
+}
+
+/* En pantallas de poca altura, la franja al pie se oculta para no chocar con
+   el formulario (el modo "crear cuenta" es más alto). */
+@media (max-height: 740px) {
+  .login-foot {
+    display: none;
+  }
+}
+
+/* ---- Responsive: sin la portada pesada en móvil ---- */
+
+@media (max-width: 900px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-hero {
+    display: none;
+  }
+
+  .login-panel {
+    min-width: 0;
+    padding: 48px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-hero__image,
+  .login-hero__caption--1,
+  .login-hero__caption--2,
+  .login-hero__caption--3 {
+    animation: none !important;
+  }
+
+  .login-hero__image {
+    object-position: 50% 46%;
+  }
+
+  .login-hero__caption--2 {
+    opacity: 1;
+  }
+}
+
+/* ---- Los tres niveles, para móvil ----
+   La portada (y con ella sus rótulos) se oculta por debajo de 900px, así que
+   los mismos tres niveles se repiten aquí en texto. Van DEBAJO del formulario
+   para no empujar el acceso hacia abajo. */
+.login-cascade-mini {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .login-cascade-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+    margin: 26px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .login-cascade-mini__step {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--color-gray);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: rgba(27, 54, 93, 0.04);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .login-cascade-mini__step--3 {
+    border-left-color: var(--color-primary-light);
+  }
+
+  .login-cascade-mini__step--2 {
+    border-left-color: var(--color-teal);
+  }
+
+  .login-cascade-mini__step--1 {
+    border-left-color: var(--color-orange);
+  }
+
+  .login-cascade-mini__level {
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+}

@@ -1,0 +1,223 @@
+.indicator-cause-picker {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.indicator-cause-picker__breadcrumb {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.indicator-cause-picker__breadcrumb button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.indicator-cause-picker__breadcrumb button:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.indicator-cause-picker__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.indicator-cause-picker__children li {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  /* Antes recortaba las esquinas de los botones con overflow: hidden en
+     vez de redondearlos ellos mismos — Safari/WebKit (iPhone) tiene fallas
+     de hit-testing ya documentadas cuando un contenedor con overflow:
+     hidden + border-radius envuelve varios botones interactivos: el toque
+     a veces no llega al botón aunque se vea bien (no pasa en Chrome/
+     Android, que usa un motor distinto). Cada botón redondea su propia
+     esquina exterior (ver abajo) para lograr la misma píldora visual sin
+     depender de recortar nada. */
+}
+
+.indicator-cause-picker__children li.indicator-cause-picker__children-item--confirming {
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.indicator-cause-picker__children button {
+  background: none;
+  border: none;
+  padding: 10px 4px 10px 16px;
+  min-height: 44px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--color-text);
+  /* manipulation: quita el retraso de ~300ms que algunos navegadores
+     móviles (y WebViews embebidos, ej. el de WhatsApp) meten antes de
+     confirmar un tap, por si el usuario iba a hacer doble-tap para zoom —
+     sin esto, un tap real a veces no se distingue bien de un toque que
+     empieza a hacer scroll, y el botón "no responde" a la primera. */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+  /* Redondea su propia esquina izquierda — junto con .indicator-cause
+     -picker__delete (a la derecha) o :only-child (cuando no hay botón de
+     borrar, ej. RootCausePicker) arma la píldora completa sin overflow:
+     hidden en el contenedor. */
+  border-radius: 999px 0 0 999px;
+}
+
+.indicator-cause-picker__children button:only-child {
+  border-radius: 999px;
+}
+
+.indicator-cause-picker__children li:hover {
+  border-color: var(--color-primary);
+}
+
+.indicator-cause-picker__children li.indicator-cause-picker__children-item--active {
+  border-color: var(--color-primary);
+  background: rgba(63, 81, 181, 0.1);
+}
+
+.indicator-cause-picker__children li.indicator-cause-picker__children-item--active button {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.indicator-cause-picker__children button.indicator-cause-picker__delete {
+  padding: 10px 16px;
+  min-width: 44px;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 0 999px 999px 0;
+}
+
+.indicator-cause-picker__children button.indicator-cause-picker__delete:hover {
+  color: var(--color-fail);
+}
+
+.indicator-cause-picker__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(211, 47, 47, 0.06);
+  border: 1px solid var(--color-fail);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  max-width: 320px;
+}
+
+.indicator-cause-picker__confirm-impact {
+  color: var(--color-fail);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.indicator-cause-picker__confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.indicator-cause-picker__confirm-actions button {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.indicator-cause-picker__confirm-actions button:first-child {
+  background: var(--color-fail);
+  border-color: var(--color-fail);
+  color: white;
+}
+
+.indicator-cause-picker__confirm-actions button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.indicator-cause-picker__new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Ver nota equivalente en cause-taxonomy-picker.css: base real para que el
+   botón baje de línea en vez de aplastar el campo. */
+.indicator-cause-picker__new input {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.indicator-cause-picker__new button {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.indicator-cause-picker__new button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.indicator-cause-picker__selected {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-teal);
+}
+
+.indicator-cause-picker__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.unit-picker__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.unit-picker__back {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.unit-picker__saving {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}

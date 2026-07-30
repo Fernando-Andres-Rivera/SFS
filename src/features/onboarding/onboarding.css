@@ -1,0 +1,263 @@
+.onboarding-page {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.onboarding-page.users-page {
+  max-width: 960px;
+}
+
+.users-section-title {
+  margin: 28px 0 12px;
+  font-size: 1.05rem;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  vertical-align: top;
+}
+
+.users-table select {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.users-row--inactive td {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.users-site-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.users-site-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.users-site-na {
+  color: var(--color-text-muted);
+}
+
+.users-status-toggle {
+  border: 1px solid var(--color-ok);
+  color: var(--color-ok);
+  background: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.users-status-toggle--inactive {
+  border-color: var(--color-fail);
+  color: var(--color-fail);
+}
+
+.users-status-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.onboarding-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* .onboarding-form__field es un <div> con la misma pinta que un <label>, para
+   campos que pueden contener BOTONES: ahí un <label> reenvía clics sintéticos
+   a su control asociado (en Safari/iOS de forma problemática). */
+.onboarding-form label,
+.onboarding-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.onboarding-form input,
+.onboarding-form select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-weight: 400;
+}
+
+.onboarding-form input:disabled {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.onboarding-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.onboarding-axes {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+
+.onboarding-axes legend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.onboarding-form label.onboarding-axis-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  padding: 4px 0;
+}
+
+.industry-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* "← Elegir de la lista" lleva white-space: nowrap (~150px). Con base 0 el
+   campo se encogía a la mitad en móvil; con base real el enlace baja. */
+.industry-picker input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.industry-picker__back {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.onboarding-error {
+  color: var(--color-fail);
+}
+
+.onboarding-success-text {
+  color: var(--color-ok);
+  font-weight: 600;
+}
+
+.onboarding-credentials {
+  border: 1px solid var(--color-ok);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-ok) 8%, var(--color-surface));
+  padding: 16px 18px;
+}
+
+.onboarding-credentials__title {
+  margin: 0 0 12px;
+  color: var(--color-ok);
+  font-weight: 600;
+}
+
+.onboarding-credentials__grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0 0 12px;
+}
+
+.onboarding-credentials__grid dt {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  align-self: center;
+}
+
+.onboarding-credentials__grid dd {
+  margin: 0;
+}
+
+.onboarding-credentials__grid code {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: var(--color-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  user-select: all;
+}
+
+.onboarding-credentials__hint {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.onboarding-credentials__copy {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-ok);
+  background: var(--color-surface);
+  color: var(--color-ok);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.onboarding-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.onboarding-success p {
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.onboarding-success__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.onboarding-success__actions button {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}

@@ -1,0 +1,113 @@
+.capture-auth-page {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.capture-auth-error {
+  color: var(--color-fail);
+}
+
+.period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.level-site-select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.capture-auth-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.capture-auth-stat {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Filete de marca al borde superior — mismo gesto que las tarjetas de eje. */
+.capture-auth-stat::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--grad-teal);
+}
+
+.capture-auth-stat {
+  transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+
+.capture-auth-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.capture-auth-stat__value {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.capture-auth-stat__label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.capture-auth-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 22px 24px;
+  margin-bottom: 20px;
+}
+
+.capture-auth-card h2 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.capture-auth-card__subtitle {
+  margin: 0 0 14px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.capture-auth-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.capture-auth-table th,
+.capture-auth-table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.capture-auth-table td:last-child {
+  white-space: normal;
+  min-width: 180px;
+}

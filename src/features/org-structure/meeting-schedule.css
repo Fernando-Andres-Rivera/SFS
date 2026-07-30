@@ -1,0 +1,157 @@
+.meeting-schedule-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.meeting-schedule-site-row {
+  margin-bottom: 20px;
+}
+
+.meeting-schedule-site-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  max-width: 320px;
+}
+
+.meeting-schedule-site-select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.meeting-schedule-site-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.meeting-schedule-fallback {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.meeting-schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meeting-schedule-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+}
+
+.meeting-schedule-card h2 {
+  font-size: 1rem;
+  margin-bottom: 14px;
+}
+
+.meeting-schedule-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.meeting-schedule-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  flex: 1 1 200px;
+}
+
+.meeting-schedule-row input,
+.meeting-schedule-row select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.meeting-schedule-weekdays {
+  margin-bottom: 14px;
+}
+
+.meeting-schedule-weekdays__label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8px;
+}
+
+.meeting-schedule-weekdays__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meeting-schedule-weekday {
+  min-width: 48px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.meeting-schedule-weekday.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.meeting-schedule-weekdays__warning {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--color-fail);
+  font-weight: 600;
+}
+
+.meeting-schedule-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.meeting-schedule-clear {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-fail);
+  color: var(--color-fail);
+  background: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.meeting-schedule-clear:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.meeting-schedule-summary {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}

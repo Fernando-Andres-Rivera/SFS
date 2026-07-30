@@ -1,0 +1,394 @@
+.board-page {
+  max-width: 1160px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.board-header {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.board-header__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Un indicador, su análisis de causas y su plan de acción — cada uno
+   cubriendo el ancho completo de la pantalla, apilados en ese orden, en
+   vez de columnas lado a lado (antes el plan de acción quedaba angosto en
+   una columna aparte). */
+.board-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.board-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+}
+
+.board-card h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+/* Panel "hero" del indicador: mismo lenguaje visual que la tarjeta estándar
+   (IndicatorCard) — fondo coloreado por pilar (mezclado con el navy
+   corporativo, ver el style inline en IndicatorBoardPage.tsx), texto claro. */
+.board-result {
+  /* Marco: rojo si incumple, verde si cumple (ver MARCO_COLOR) — igual que
+     IndicatorCard, para que el estado clave se vea de un vistazo. */
+  border: 3px solid transparent;
+  box-shadow: var(--shadow-kpi);
+  color: #fff;
+  animation: lpms-fade-up var(--dur-slow) var(--ease-out) both;
+}
+
+.board-result__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.board-result__header h2 {
+  margin-bottom: 0;
+  color: #fff;
+}
+
+.board-result__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.board-result__period {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.82rem;
+}
+
+.board-result__calculated-note {
+  margin: 0 0 12px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.board-result__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  padding: 5px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.board-result__badge--cumple {
+  background: var(--color-marco-cumple);
+}
+
+.board-result__badge--riesgo {
+  background: var(--color-risk);
+}
+
+.board-result__badge--incumple {
+  background: var(--color-fail);
+}
+
+.board-result__badge--sin_datos {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.board-result__values {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.board-result__value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  /* @keyframes lpms-pop está en index.css. */
+  animation: lpms-pop var(--dur-slow) var(--ease-out) both;
+}
+
+.board-result__value small {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.board-result__target {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Alto fijo — mismo espacio con o sin tendencia que dibujar. */
+.board-result__sparkline {
+  margin-top: 8px;
+  min-height: 48px;
+}
+
+.board-result .trend-sparkline__tick {
+  fill: rgba(255, 255, 255, 0.45);
+}
+
+.board-result .trend-sparkline__tick--sunday {
+  fill: #ff8a80;
+}
+
+.board-result__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+  max-width: 420px;
+}
+
+/* Alto FIJO, no mínimo — mismo motivo que .indicator-card__metric: con
+   min-height, un rótulo largo como "Días sin evento" simplemente crece más
+   alto que uno de "Sí"/"No" en otro indicador, y el tamaño deja de ser
+   igual/estándar entre pantallas. */
+.board-result__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 66px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  text-align: center;
+  animation: lpms-fade-up var(--dur) var(--ease-out) both;
+}
+
+.board-result__metric:nth-child(1) {
+  animation-delay: 80ms;
+}
+
+.board-result__metric:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.board-result__metric:nth-child(3) {
+  animation-delay: 220ms;
+}
+
+/* Menos transparencia que antes (era 30%) para que el rojo/verde se lea con
+   fuerza. "Positivo" usa el mismo verde del marco (--color-marco-cumple),
+   no el teal corporativo — ese teal ya es el fondo de los pilares Calidad
+   y Personas. */
+.board-result__metric--positive {
+  background: color-mix(in srgb, var(--color-marco-cumple) 55%, transparent);
+}
+
+.board-result__metric--negative {
+  background: color-mix(in srgb, var(--color-fail) 55%, transparent);
+}
+
+.board-result__metric--neutral {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.board-result__metric--muted {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.board-result__metric-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.board-result__metric--muted .board-result__metric-value {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.board-result__metric-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.7);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.board-causes-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  margin: -6px 0 14px;
+}
+
+.board-causes-pareto {
+  margin-bottom: 18px;
+  /* Con muchas causas en una pantalla angosta, el nombre no cabe sin
+     encimarse con el de al lado — mejor desplazar horizontalmente (el
+     interior lleva un min-width según la cantidad de barras). */
+  overflow-x: auto;
+}
+
+.board-plan-item__cause {
+  color: var(--color-primary);
+  font-size: 0.85rem;
+  margin: 0 0 8px;
+}
+
+.board-plan-item__no-cause {
+  color: var(--color-fail);
+  font-size: 0.85rem;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.board-link-button {
+  display: inline-block;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+.board-plans-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.board-plan-form {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.board-plan-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.board-plan-form__full {
+  grid-column: 1 / -1;
+}
+
+.board-plan-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.board-plan-form input,
+.board-plan-form select,
+.board-plan-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.board-plan-form input:disabled {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.board-plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.board-plan-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  border-top: 1px solid var(--color-border);
+  padding-top: 14px;
+}
+
+.board-plan-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.board-plan-item__description {
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.board-plan-item__meta {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 8px;
+}
+
+.board-plan-item__delete {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0 8px;
+  color: var(--color-fail);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.board-plan-item__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.board-plan-item__actions button {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.board-plan-item__actions button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}

@@ -1,0 +1,570 @@
+import { useEffect, useState, type FormEvent } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import {
+  AGGREGATION_METHOD_HELP,
+  AGGREGATION_METHOD_LABEL,
+  INDICATOR_VALUE_TYPE_LABEL,
+  type AggregationMethod,
+  type Axis,
+  type Indicator,
+  type IndicatorFrequency,
+  type IndicatorValueType,
+  type ImprovementDirection,
+  type Profile,
+  type Site,
+  type SiteLocation,
+} from '../../lib/types'
+import {
+  createIndicator,
+  fetchIndicatorById,
+  fetchIndicatorParentIds,
+  fetchOrganizationAxes,
+  fetchParentCandidates,
+  fetchProfiles,
+  fetchSites,
+  updateIndicator,
+  type IndicatorFormValues,
+} from './indicatorsApi'
+import { fetchSiteLocations } from '../org-structure/orgStructureApi'
+import { deleteTarget, fetchAnnualTarget, saveAnnualTarget } from './targetsApi'
+import { UnitPicker } from './UnitPicker'
+import { Semaforo } from '../../components/ui/Semaforo'
+import './indicators.css'
+
+const CURRENT_YEAR = new Date().getFullYear()
+
+const FRECUENCIAS: IndicatorFrequency[] = ['diaria', 'semanal', 'quincenal', 'mensual', 'trimestral']
+const DIRECCIONES: { value: ImprovementDirection; label: string }[] = [
+  { value: 'mayor_mejor', label: 'Mayor es mejor' },
+  { value: 'menor_mejor', label: 'Menor es mejor' },
+]
+// Para un indicador binario, "sentido de mejora" se reutiliza para elegir
+// CUÁL respuesta es la meta — no siempre es "Sí" (ej. "¿hubo un accidente?"
+// tiene como objetivo que sea "No").
+const BINARY_DIRECCIONES: { value: ImprovementDirection; label: string }[] = [
+  { value: 'mayor_mejor', label: 'El objetivo es Sí' },
+  { value: 'menor_mejor', label: 'El objetivo es No' },
+]
+const AGGREGATION_METHODS: AggregationMethod[] = ['ultimo', 'suma', 'promedio', 'maximo', 'minimo']
+// Un indicador binario (Sí/No) admite reglas que dan un resultado 0/1
+// limpio (último/máximo/mínimo) más "promedio", que en cambio da el % de
+// registros que fueron Sí en el período — útil cuando lo que importa no es
+// "¿pasó alguna vez?" sino "¿qué tan seguido se cumplió?" (ej. 5S diaria,
+// checklist de arranque). "Suma" no aplica: sumar 0/1 no da ni un Sí/No ni
+// un % con sentido.
+const BINARY_AGGREGATION_METHODS: AggregationMethod[] = ['ultimo', 'maximo', 'minimo', 'promedio']
+const BINARY_AGGREGATION_LABEL: Record<AggregationMethod, string> = {
+  ultimo: 'El más reciente',
+  maximo: 'Si se cumplió al menos una vez en el período',
+  minimo: 'Solo si se cumplió todas las veces en el período',
+  promedio: '% de veces que se cumplió en el período',
+  suma: '',
+}
+const BINARY_AGGREGATION_HELP: Record<AggregationMethod, string> = {
+  ultimo: 'El indicador muestra Sí/No según la última vez que se registró en el período.',
+  maximo: 'Basta con un "Sí" en el período para que el indicador muestre Sí — exige al menos una vez.',
+  minimo: 'Si hubo un solo "No" en el período, el indicador muestra No — exige que se haya cumplido siempre.',
+  promedio:
+    'Cuenta cuántos registros del período fueron "Sí" contra el total y muestra ese % — ej. 18 Sí de 20 registros = 90%.',
+  suma: '',
+}
+const VALUE_TYPES: IndicatorValueType[] = ['numerico', 'binario', 'razon']
+
+// Cómo nombrar el objetivo según la frecuencia de captura del indicador —
+// un objetivo "diario" no se lee igual que uno "mensual", aunque ambos se
+// guarden como el mismo valor vigente para todo el año.
+const FRECUENCIA_ADJETIVO: Record<IndicatorFrequency, string> = {
+  diaria: 'diario',
+  semanal: 'semanal',
+  quincenal: 'quincenal',
+  mensual: 'mensual',
+  trimestral: 'trimestral',
+}
+const FRECUENCIA_SUSTANTIVO: Record<IndicatorFrequency, string> = {
+  diaria: 'día',
+  semanal: 'semana',
+  quincenal: 'quincena',
+  mensual: 'mes',
+  trimestral: 'trimestre',
+}
+
+export function IndicatorFormPage() {
+  const { id } = useParams<{ id: string }>()
+  const isEditing = Boolean(id)
+  const navigate = useNavigate()
+  const { profile, organizationId } = useAuth()
+
+  const [axes, setAxes] = useState<Axis[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  const [siteLocations, setSiteLocations] = useState<SiteLocation[]>([])
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const [parentCandidates, setParentCandidates] = useState<Indicator[]>([])
+  const [selectedParents, setSelectedParents] = useState<string[]>([])
+  const [targetValue, setTargetValue] = useState('')
+  const [targetId, setTargetId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const [form, setForm] = useState<IndicatorFormValues>({
+    organization_id: '',
+    site_id: null,
+    site_location_id: null,
+    axis_id: '',
+    level: 1,
+    name: '',
+    definition: '',
+    calculation_formula: '',
+    unit: '',
+    frequency: 'diaria',
+    improvement_direction: 'mayor_mejor',
+    aggregation_method: 'ultimo',
+    responsible_id: null,
+    is_calculated: false,
+    value_type: 'numerico',
+    is_focus: false,
+  })
+
+  useEffect(() => {
+    if (!organizationId) return
+
+    Promise.all([fetchOrganizationAxes(organizationId), fetchSites(organizationId), fetchProfiles(organizationId)]).then(
+      ([axesData, sitesData, profilesData]) => {
+        setAxes(axesData)
+        setSites(sitesData)
+        setProfiles(profilesData)
+      },
+    )
+
+    if (id) {
+      fetchIndicatorById(id).then((data) => {
+        if (data) {
+          setForm({
+            organization_id: data.organization_id,
+            site_id: data.site_id,
+            site_location_id: data.site_location_id,
+            axis_id: data.axis_id,
+            level: data.level,
+            name: data.name,
+            definition: data.definition,
+            calculation_formula: data.calculation_formula,
+            unit: data.unit,
+            frequency: data.frequency,
+            improvement_direction: data.improvement_direction,
+            aggregation_method: data.aggregation_method,
+            responsible_id: data.responsible_id,
+            is_calculated: data.is_calculated,
+            value_type: data.value_type,
+            is_focus: data.is_focus,
+          })
+        }
+      })
+      fetchIndicatorParentIds(id).then(setSelectedParents)
+      fetchAnnualTarget(id, CURRENT_YEAR).then((target) => {
+        setTargetValue(target ? String(target.target_value) : '')
+        setTargetId(target?.id ?? null)
+      })
+    }
+  }, [organizationId, id])
+
+  useEffect(() => {
+    if (!organizationId) return
+    fetchParentCandidates(organizationId, form.level, id).then(setParentCandidates)
+  }, [organizationId, form.level, id])
+
+  useEffect(() => {
+    let cancelled = false
+    const request = form.site_id ? fetchSiteLocations(form.site_id) : Promise.resolve([])
+    request.then((locs) => {
+      if (!cancelled) setSiteLocations(locs)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [form.site_id])
+
+  function update<K extends keyof IndicatorFormValues>(key: K, value: IndicatorFormValues[K]) {
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  // Un indicador binario no tiene unidad propia, y solo admite las reglas de
+  // agregación que dan un resultado 0/1 limpio — se fuerzan aquí. El sentido
+  // de mejora SÍ se conserva: se reutiliza para elegir si la meta es Sí o No
+  // (ver BINARY_DIRECCIONES), por defecto Sí al cambiar a este tipo.
+  function handleValueTypeChange(nextType: IndicatorValueType) {
+    setForm((f) => ({
+      ...f,
+      value_type: nextType,
+      unit: nextType === 'binario' ? 'Sí/No' : f.unit === 'Sí/No' ? '' : f.unit,
+      // razón siempre mide "real sobre programado" — más real es mejor,
+      // sin importar qué se esté contando.
+      improvement_direction: nextType === 'binario' || nextType === 'razon' ? 'mayor_mejor' : f.improvement_direction,
+      // Para razón este valor queda sin uso real: aggregateValues() ignora
+      // aggregation_method en ese tipo y siempre suma programado/real del
+      // período — se deja en 'ultimo' solo porque la columna es NOT NULL.
+      aggregation_method:
+        nextType === 'binario' && !BINARY_AGGREGATION_METHODS.includes(f.aggregation_method)
+          ? 'ultimo'
+          : nextType === 'razon'
+            ? 'ultimo'
+            : f.aggregation_method,
+    }))
+  }
+
+  function toggleParent(parentId: string) {
+    setSelectedParents((current) =>
+      current.includes(parentId) ? current.filter((p) => p !== parentId) : [...current, parentId],
+    )
+  }
+
+  async function handleDeleteTarget() {
+    if (!targetId) return
+    if (!window.confirm(`¿Quitar el objetivo ${CURRENT_YEAR} de este indicador? Esta acción no se puede deshacer.`)) {
+      return
+    }
+    await deleteTarget(targetId)
+    setTargetId(null)
+    setTargetValue('')
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (!organizationId || !profile) return
+    setSaving(true)
+    setError(null)
+    try {
+      const payload: IndicatorFormValues = { ...form, organization_id: organizationId }
+      const indicatorId = isEditing && id ? id : await createIndicator(payload, selectedParents)
+      if (isEditing && id) {
+        await updateIndicator(id, payload, selectedParents)
+      }
+
+      // El objetivo de un indicador binario no es un número que el usuario
+      // escriba: es "Sí" o "No" según el sentido de mejora elegido arriba
+      // (mayor_mejor = la meta es Sí, menor_mejor = la meta es No). El de
+      // uno de razón tampoco: siempre es 100% (real alcanzó lo programado),
+      // se recalcula solo con lo que se capture cada período.
+      const effectiveTarget =
+        form.value_type === 'binario'
+          ? form.improvement_direction === 'mayor_mejor'
+            ? '1'
+            : '0'
+          : form.value_type === 'razon'
+            ? '100'
+            : targetValue
+      if (effectiveTarget.trim()) {
+        await saveAnnualTarget({
+          indicatorId,
+          year: CURRENT_YEAR,
+          targetValue: Number(effectiveTarget),
+          createdBy: profile.id,
+        })
+      }
+
+      navigate('/indicadores')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar el indicador.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="indicator-form-page">
+      <h1>{isEditing ? 'Editar indicador' : 'Nuevo indicador'}</h1>
+
+      <form className="indicator-form" onSubmit={handleSubmit}>
+        <label>
+          Nombre
+          <input value={form.name} onChange={(e) => update('name', e.target.value)} required />
+        </label>
+
+        <label>
+          Definición
+          <textarea value={form.definition ?? ''} onChange={(e) => update('definition', e.target.value)} rows={2} />
+        </label>
+
+        <label>
+          Fórmula de cálculo
+          <input
+            value={form.calculation_formula ?? ''}
+            onChange={(e) => update('calculation_formula', e.target.value)}
+          />
+        </label>
+
+        <div className="indicator-form__row">
+          <label>
+            Eje
+            <select value={form.axis_id} onChange={(e) => update('axis_id', e.target.value)} required>
+              <option value="" disabled>
+                Selecciona un eje
+              </option>
+              {axes.map((axis) => (
+                <option key={axis.id} value={axis.id}>
+                  {axis.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Nivel
+            <select
+              value={form.level}
+              onChange={(e) => update('level', Number(e.target.value) as 1 | 2 | 3)}
+            >
+              <option value={1}>Nivel 1 — Operativo</option>
+              <option value={2}>Nivel 2 — Administrativo</option>
+              <option value={3}>Nivel 3 — Gerencial</option>
+            </select>
+          </label>
+
+          <label>
+            Tipo de valor
+            <select
+              value={form.value_type}
+              onChange={(e) => handleValueTypeChange(e.target.value as IndicatorValueType)}
+            >
+              {VALUE_TYPES.map((vt) => (
+                <option key={vt} value={vt}>
+                  {INDICATOR_VALUE_TYPE_LABEL[vt]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="indicator-form__row">
+          <label>
+            Sitio {form.level === 3 && '(opcional para indicadores corporativos)'}
+            <select
+              value={form.site_id ?? ''}
+              onChange={(e) => {
+                update('site_id', e.target.value || null)
+                update('site_location_id', null)
+              }}
+            >
+              <option value="">Corporativo (todos los sitios)</option>
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Instalación (opcional, precisa el lugar dentro del sitio)
+            <select
+              value={form.site_location_id ?? ''}
+              onChange={(e) => update('site_location_id', e.target.value || null)}
+              disabled={!form.site_id || siteLocations.length === 0}
+            >
+              <option value="">Sin precisar</option>
+              {siteLocations.map((loc) => (
+                <option key={loc.id} value={loc.id}>
+                  {loc.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="indicator-form__row">
+          {/* El bloque de abajo usa <div> y no <label>: UnitPicker trae un
+              botón dentro, y un <label> se asocia al primer elemento
+              "etiquetable" que tenga — en Safari/iOS eso reenvía clics
+              sintéticos a ese botón. */}
+          {(form.value_type === 'numerico' || form.value_type === 'razon') && (
+            <div className="indicator-form__field">
+              Unidad de medida {form.value_type === 'razon' && '(qué se cuenta, ej. personas, equipos)'}
+              {organizationId && profile && (
+                <UnitPicker
+                  organizationId={organizationId}
+                  createdBy={profile.id}
+                  value={form.unit}
+                  onChange={(v) => update('unit', v)}
+                />
+              )}
+            </div>
+          )}
+
+          <label>
+            Frecuencia
+            <select value={form.frequency} onChange={(e) => update('frequency', e.target.value as IndicatorFrequency)}>
+              {FRECUENCIAS.map((freq) => (
+                <option key={freq} value={freq}>
+                  {freq}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {form.value_type !== 'razon' && (
+            <label>
+              {form.value_type === 'binario' ? 'Objetivo' : 'Sentido de mejora'}
+              <select
+                value={form.improvement_direction}
+                onChange={(e) => update('improvement_direction', e.target.value as ImprovementDirection)}
+              >
+                {(form.value_type === 'binario' ? BINARY_DIRECCIONES : DIRECCIONES).map((dir) => (
+                  <option key={dir.value} value={dir.value}>
+                    {dir.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+
+        <label className="indicator-form__parent-option">
+          <input
+            type="checkbox"
+            checked={form.is_calculated}
+            onChange={(e) => update('is_calculated', e.target.checked)}
+          />
+          Este indicador se calcula automáticamente a partir de sus indicadores hijo (no se captura a mano)
+        </label>
+
+        <label className="indicator-form__parent-option">
+          <input type="checkbox" checked={form.is_focus} onChange={(e) => update('is_focus', e.target.checked)} />
+          Foco — marcarlo como prioritario (aparece con un borde azul muy visible en todas las tarjetas)
+        </label>
+
+        {form.value_type === 'razon' ? (
+          <div className="indicator-form__target">
+            <span className="indicator-form__target-label">Cómo resolver varios registros en un período</span>
+            <p className="indicator-form__target-rule">
+              Se suma el total programado y el total real de todos los días del período elegido, y el % se
+              calcula sobre esos totales — no es el promedio de los % de cada día.
+            </p>
+          </div>
+        ) : (
+          <div className="indicator-form__target">
+            <label>
+              {form.is_calculated
+                ? 'Cómo combinar los indicadores hijo en un período'
+                : form.value_type === 'binario'
+                  ? 'Cómo resolver varios registros Sí/No en un período'
+                  : 'Cómo agregar varias mediciones en un período (semana, mes…)'}
+              <select
+                value={form.aggregation_method}
+                onChange={(e) => update('aggregation_method', e.target.value as AggregationMethod)}
+              >
+                {(form.value_type === 'binario' ? BINARY_AGGREGATION_METHODS : AGGREGATION_METHODS).map((method) => (
+                  <option key={method} value={method}>
+                    {form.value_type === 'binario' ? BINARY_AGGREGATION_LABEL[method] : AGGREGATION_METHOD_LABEL[method]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="indicator-form__target-rule">
+              {form.is_calculated
+                ? 'Cada vez que se muestre este indicador, se combinan (con esta regla) los valores de ese mismo período de los indicadores que lo tengan marcado como padre — no hace falta capturar un valor propio.'
+                : form.value_type === 'binario'
+                  ? BINARY_AGGREGATION_HELP[form.aggregation_method]
+                  : AGGREGATION_METHOD_HELP[form.aggregation_method]}
+            </p>
+          </div>
+        )}
+
+        {form.value_type === 'binario' ? (
+          <div className="indicator-form__target">
+            <span className="indicator-form__target-label">Objetivo</span>
+            <p className="indicator-form__target-rule">
+              {form.aggregation_method === 'promedio' ? (
+                <>
+                  La meta es <strong>{form.improvement_direction === 'mayor_mejor' ? '100% Sí' : '0% Sí'}</strong> — no
+                  hay un número que definir, arriba elegiste cuál respuesta es la deseada. El % de registros{' '}
+                  {form.improvement_direction === 'mayor_mejor' ? 'que fueron Sí' : 'que fueron No'} en el período
+                  decide el color, con la misma banda de tolerancia que cualquier otro indicador.
+                </>
+              ) : (
+                <>
+                  La meta es <strong>{form.improvement_direction === 'mayor_mejor' ? 'Sí' : 'No'}</strong> — no hay un
+                  número que definir, arriba elegiste cuál respuesta es la deseada. Cada vez que se capture{' '}
+                  {form.improvement_direction === 'mayor_mejor' ? 'Sí' : 'No'}{' '}
+                  <Semaforo estado="cumple" size="sm" />, o{' '}
+                  {form.improvement_direction === 'mayor_mejor' ? 'No' : 'Sí'} <Semaforo estado="incumple" size="sm" />.
+                </>
+              )}
+            </p>
+          </div>
+        ) : form.value_type === 'razon' ? (
+          <div className="indicator-form__target">
+            <span className="indicator-form__target-label">Objetivo</span>
+            <p className="indicator-form__target-rule">
+              La meta siempre es <strong>100%</strong> (real sobre programado) — no hay un número que definir. Cada
+              captura pide cuántos se programaron y cuántos ocurrieron realmente (ej. 7 programados, 6 asistieron =
+              85.7%); si el % alcanza o supera 100 se muestra <Semaforo estado="cumple" size="sm" />, si no,{' '}
+              <Semaforo estado="incumple" size="sm" />.
+            </p>
+          </div>
+        ) : (
+          <div className="indicator-form__target">
+            <label>
+              Objetivo {FRECUENCIA_ADJETIVO[form.frequency]} (vigente todo {CURRENT_YEAR})
+              <input
+                type="number"
+                step="any"
+                value={targetValue}
+                onChange={(e) => setTargetValue(e.target.value)}
+                placeholder={`Ej. 0 ${form.unit} por ${FRECUENCIA_SUSTANTIVO[form.frequency]}`.trim()}
+              />
+            </label>
+            {targetId && profile?.role === 'admin_consultora' && (
+              <button type="button" className="indicator-form__target-delete" onClick={handleDeleteTarget}>
+                Quitar objetivo
+              </button>
+            )}
+            <p className="indicator-form__target-rule">
+              Como la frecuencia de captura es <strong>{form.frequency}</strong>, este objetivo se evalúa contra
+              cada valor {FRECUENCIA_ADJETIVO[form.frequency]} — no contra un total del año. Regla estándar de
+              color, igual en todas las pantallas del aplicativo (tablero, cascada, panorama global): un valor{' '}
+              {form.improvement_direction === 'mayor_mejor' ? '≥' : '≤'} {targetValue.trim() || '—'} se muestra{' '}
+              <Semaforo estado="cumple" size="sm" />, uno claramente{' '}
+              {form.improvement_direction === 'mayor_mejor' ? '<' : '>'} el objetivo se muestra{' '}
+              <Semaforo estado="incumple" size="sm" />, con una banda intermedia{' '}
+              <Semaforo estado="riesgo" size="sm" /> cerca del límite.
+            </p>
+          </div>
+        )}
+
+        <label>
+          Responsable
+          <select value={form.responsible_id ?? ''} onChange={(e) => update('responsible_id', e.target.value || null)}>
+            <option value="">Sin asignar</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.full_name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <fieldset className="indicator-form__parents">
+          <legend>Indicadores padre (nivel superior que este indicador precursa)</legend>
+          {parentCandidates.length === 0 && <p>No hay indicadores de nivel superior disponibles.</p>}
+          {parentCandidates.map((candidate) => (
+            <label key={candidate.id} className="indicator-form__parent-option">
+              <input
+                type="checkbox"
+                checked={selectedParents.includes(candidate.id)}
+                onChange={() => toggleParent(candidate.id)}
+              />
+              Nivel {candidate.level} — {candidate.name}
+            </label>
+          ))}
+        </fieldset>
+
+        {error && <p className="indicator-form__error">{error}</p>}
+
+        <div className="indicator-form__actions">
+          <button type="submit" className="button-primary" disabled={saving}>
+            {saving ? 'Guardando…' : 'Guardar indicador'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}

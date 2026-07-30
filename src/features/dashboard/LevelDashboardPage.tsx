@@ -1,0 +1,342 @@
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { IndicatorCard } from '../../components/ui/IndicatorCard'
+import { RangePicker } from '../../components/ui/RangePicker'
+import { DueActionsPanel, type DueAction } from '../../components/ui/DueActionsPanel'
+import { EscalatedQuickWins } from '../quick-win/EscalatedQuickWins'
+import { aggregateBreakdown, aggregateValues, buildPeriodBucketsInRange } from '../../lib/periods'
+import { defaultRange, today } from '../../lib/dateRange'
+import {
+  fetchActiveAxes,
+  fetchCurrentTargetsForIndicators,
+  fetchIndicatorsByLevel,
+  fetchMeasurementsInRange,
+} from './dashboardApi'
+import { fetchActionPlansDueForIndicators, advanceActionPlanStatus, deleteActionPlan } from '../action-plans/actionPlansApi'
+import { fetchSites } from '../indicators/indicatorsApi'
+import {
+  computeDaysWithoutAccidents,
+  fetchLatestAccident,
+  fetchSafetyEventsInRange,
+  isDaysWithoutAccidentsIndicatorName,
+} from '../safety/safetyApi'
+import type { AggregateBreakdown, Axis, Indicator, PdcaStatus, SemaforoEstado, Site } from '../../lib/types'
+import { PageHeader } from '../../components/ui/PageHeader'
+import './dashboard.css'
+
+interface IndicatorRow {
+  indicator: Indicator
+  latestValue: number | null
+  breakdown: AggregateBreakdown | null
+  targetValue: number | null
+  trend: { period_date: string; value: number | null }[]
+  estadoOverride?: SemaforoEstado
+}
+
+const NIVELES = [1, 2, 3] as const
+
+export function LevelDashboardPage() {
+  const { level: levelParam } = useParams<{ level: string }>()
+  const level = (Number(levelParam) as 1 | 2 | 3) || 1
+
+  const { profile, organizationId, siteIds } = useAuth()
+  // Mismo criterio que el RLS de action_plan_evidence: solo estos roles
+  // pueden quitar evidencia ya subida.
+  const canRemoveEvidence =
+    profile?.role === 'admin_consultora' || profile?.role === 'admin_cliente' || profile?.role === 'gerente'
+  // Borrado físico de registros: solo admin_consultora.
+  const canDeleteRecords = profile?.role === 'admin_consultora'
+  const [axes, setAxes] = useState<Axis[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  // null = todavía no lo tocó el usuario; en ese caso se usa el primer sitio asignado por defecto.
+  const [siteOverride, setSiteOverride] = useState<string | null>(null)
+  const [siteTouched, setSiteTouched] = useState(false)
+  const selectedSite = siteTouched ? siteOverride : (siteIds[0] ?? null)
+  const [range, setRange] = useState(defaultRange())
+  const [rows, setRows] = useState<IndicatorRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dueActions, setDueActions] = useState<Map<string, DueAction[]>>(new Map())
+  const [advancingId, setAdvancingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!organizationId) return
+    Promise.all([fetchActiveAxes(organizationId), fetchSites(organizationId)]).then(([axesData, sitesData]) => {
+      setAxes(axesData)
+      setSites(sitesData)
+    })
+  }, [organizationId])
+
+  useEffect(() => {
+    if (!organizationId) return
+    const orgId = organizationId
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      const indicators = await fetchIndicatorsByLevel(orgId, level, selectedSite)
+      if (cancelled) return
+
+      const from = new Date(`${range.from}T00:00:00`)
+      const to = new Date(`${range.to}T00:00:00`)
+      const buckets = buildPeriodBucketsInRange('dia', from, to)
+      const ids = indicators.map((i) => i.id)
+
+      // 3 consultas en total en vez de una por indicador (patrón N+1).
+      const [measRows, targetMap, dueActionsMap] = await Promise.all([
+        fetchMeasurementsInRange(ids, range.from, range.to),
+        fetchCurrentTargetsForIndicators(ids, to.getFullYear(), to.getMonth() + 1),
+        fetchActionPlansDueForIndicators(ids, today()),
+      ])
+      if (cancelled) return
+      setDueActions(
+        new Map(
+          Array.from(dueActionsMap.entries()).map(([indicatorId, plans]) => [
+            indicatorId,
+            plans.map((p) => ({
+              id: p.id,
+              description: p.description,
+              status: p.status,
+              responsibleName: p.responsible?.full_name ?? null,
+              creatorName: p.creator?.full_name ?? null,
+              rootCause: p.causal_analysis?.root_cause ?? null,
+            })),
+          ]),
+        ),
+      )
+
+      const measByIndicator = new Map<
+        string,
+        { period_date: string; value: number; planned_value: number | null; real_value: number | null }[]
+      >()
+      for (const m of measRows) {
+        const list = measByIndicator.get(m.indicator_id) ?? []
+        list.push({ period_date: m.period_date, value: m.value, planned_value: m.planned_value, real_value: m.real_value })
+        measByIndicator.set(m.indicator_id, list)
+      }
+
+      // "Días sin accidentes" no se captura a mano — se calcula igual que en
+      // Seguridad y Salud en el Trabajo, a partir de la fecha de inicio de
+      // operación o el último accidente del sitio del indicador.
+      const daysWithoutAccidentsIndicators = indicators.filter(
+        (i) => i.site_id && isDaysWithoutAccidentsIndicatorName(i.name),
+      )
+      const daysWithoutAccidentsMap = new Map<string, number | null>()
+      // El conteo acumulado siempre "cumple" un objetivo de 0 — lo que
+      // realmente indica si el rango elegido estuvo bien o mal es si hubo
+      // un accidente reportado DENTRO de ese rango, sin importar cuántos
+      // días lleva la racha desde entonces.
+      const daysWithoutAccidentsEstadoMap = new Map<string, SemaforoEstado>()
+      if (daysWithoutAccidentsIndicators.length > 0) {
+        const rangeEndExclusive = (() => {
+          const d = new Date(`${range.to}T00:00:00`)
+          d.setDate(d.getDate() + 1)
+          return d.toISOString().slice(0, 10)
+        })()
+        await Promise.all(
+          daysWithoutAccidentsIndicators.map(async (indicator) => {
+            const site = sites.find((s) => s.id === indicator.site_id)
+            const [latestAccident, rangeEvents] = await Promise.all([
+              fetchLatestAccident([indicator.site_id!]),
+              fetchSafetyEventsInRange([indicator.site_id!], range.from, rangeEndExclusive),
+            ])
+            daysWithoutAccidentsMap.set(
+              indicator.id,
+              computeDaysWithoutAccidents(site?.operation_start_date ?? null, latestAccident?.event_date ?? null, to),
+            )
+            const hasAccidentInRange = rangeEvents.some((e) => e.event_type === 'accidente')
+            daysWithoutAccidentsEstadoMap.set(indicator.id, hasAccidentInRange ? 'incumple' : 'cumple')
+          }),
+        )
+      }
+      if (cancelled) return
+
+      const rowsData = indicators.map((indicator) => {
+        const indMeas = measByIndicator.get(indicator.id) ?? []
+        const series = buckets.map((b) => ({
+          label: b.label,
+          date: b.startDate,
+          value: aggregateValues(
+            indMeas.filter((r) => r.period_date >= b.startDate && r.period_date <= b.endDate),
+            indicator.aggregation_method,
+            indicator.value_type,
+          ),
+        }))
+        // El KPI del rango completo (no solo el último bucket): "suma" debe
+        // sumar TODO el rango elegido, igual que el Tablero — antes esto
+        // tomaba el valor del último día, que no reflejaba el rango.
+        const latestValue = daysWithoutAccidentsMap.has(indicator.id)
+          ? (daysWithoutAccidentsMap.get(indicator.id) ?? null)
+          : aggregateValues(indMeas, indicator.aggregation_method, indicator.value_type)
+        // "Días sin accidentes" no tiene un desglose "X de Y" que mostrar.
+        const breakdown = daysWithoutAccidentsMap.has(indicator.id)
+          ? null
+          : aggregateBreakdown(
+              indMeas,
+              indicator.aggregation_method,
+              indicator.value_type,
+              indicator.improvement_direction,
+            )
+        return {
+          indicator,
+          latestValue,
+          breakdown,
+          targetValue: targetMap.get(indicator.id) ?? null,
+          trend: series.map((p) => ({ period_date: p.date, value: p.value })),
+          estadoOverride: daysWithoutAccidentsEstadoMap.get(indicator.id),
+        }
+      })
+      if (!cancelled) setRows(rowsData)
+      setLoading(false)
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [organizationId, level, selectedSite, range, sites])
+
+  /** Avanza el estado de un plan de acción directo desde la tarjeta de la
+   * reunión (ej. "Marcar: Eficaz"), sin tener que entrar al tablero del
+   * KPI. Si queda cerrado, ya no está "pendiente por vencer" — se quita de
+   * la lista en vez de esperar a recargar toda la pantalla. */
+  async function handleAdvance(indicatorId: string, actionId: string, status: PdcaStatus) {
+    setAdvancingId(actionId)
+    try {
+      await advanceActionPlanStatus(actionId, status)
+      setDueActions((current) => {
+        const next = new Map(current)
+        const list = next.get(indicatorId) ?? []
+        next.set(
+          indicatorId,
+          status === 'cerrado' ? list.filter((a) => a.id !== actionId) : list.map((a) => (a.id === actionId ? { ...a, status } : a)),
+        )
+        return next
+      })
+    } finally {
+      setAdvancingId(null)
+    }
+  }
+
+  async function handleDeletePlan(indicatorId: string, action: DueAction) {
+    if (
+      !window.confirm(
+        `¿Eliminar definitivamente el plan "${action.description}"? Se borra también su evidencia adjunta. Esta acción no se puede deshacer.`,
+      )
+    ) {
+      return
+    }
+    await deleteActionPlan(action.id)
+    setDueActions((current) => {
+      const next = new Map(current)
+      next.set(indicatorId, (next.get(indicatorId) ?? []).filter((a) => a.id !== action.id))
+      return next
+    })
+  }
+
+  const axisById = new Map(axes.map((a) => [a.id, a]))
+  const rowsByAxis = new Map<string, IndicatorRow[]>()
+  for (const row of rows) {
+    const list = rowsByAxis.get(row.indicator.axis_id) ?? []
+    list.push(row)
+    rowsByAxis.set(row.indicator.axis_id, list)
+  }
+
+  return (
+    <div>
+      <PageHeader
+        eyebrow="Diario · Cascada de reuniones"
+        title={`Reunión de Nivel ${level}`}
+        subtitle="Todos los indicadores de este nivel, agrupados por eje."
+      />
+
+      <div className="level-toolbar">
+        <div className="level-tabs">
+          {NIVELES.map((n) => (
+            <Link key={n} to={`/niveles/${n}`} className={`level-tab ${n === level ? 'level-tab--active' : ''}`}>
+              Nivel {n}
+            </Link>
+          ))}
+        </div>
+
+        <RangePicker from={range.from} to={range.to} onChange={(from, to) => setRange({ from, to })} />
+
+        {sites.length > 0 && (
+          <select
+            className="level-site-select"
+            value={selectedSite ?? ''}
+            onChange={(e) => {
+              setSiteOverride(e.target.value || null)
+              setSiteTouched(true)
+            }}
+          >
+            <option value="">Todos los sitios</option>
+            {sites.map((site) => (
+              <option key={site.id} value={site.id}>
+                {site.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {(level === 2 || level === 3) && profile && organizationId && (
+        <EscalatedQuickWins
+          organizationId={organizationId}
+          level={level}
+          siteId={selectedSite}
+          uploadedBy={profile.id}
+          canRemoveEvidence={canRemoveEvidence}
+          canDeleteRecords={canDeleteRecords}
+        />
+      )}
+
+      {loading && <p>Cargando indicadores…</p>}
+
+      {!loading && rows.length === 0 && <p>No hay indicadores de Nivel {level} para este filtro.</p>}
+
+      {axes.map((axis) => {
+        const axisRows = rowsByAxis.get(axis.id)
+        if (!axisRows || axisRows.length === 0) return null
+        return (
+          <div className="level-section" key={axis.id}>
+            <h3 style={{ color: axisById.get(axis.id)?.color }}>{axis.name}</h3>
+            <div className="indicators-grid">
+              {axisRows.map(({ indicator, latestValue, breakdown, targetValue, trend, estadoOverride }) => (
+                <div key={indicator.id} className="indicator-cell">
+                  <IndicatorCard
+                    id={indicator.id}
+                    name={indicator.name}
+                    unit={indicator.unit}
+                    level={indicator.level}
+                    improvementDirection={indicator.improvement_direction}
+                    valueType={indicator.value_type}
+                    latestValue={latestValue}
+                    breakdown={breakdown}
+                    targetValue={targetValue}
+                    trend={trend}
+                    estadoOverride={estadoOverride}
+                    isFocus={indicator.is_focus}
+                    axisColor={axis.color}
+                  />
+                  {profile && organizationId && (
+                    <DueActionsPanel
+                      actions={dueActions.get(indicator.id) ?? []}
+                      advancingId={advancingId}
+                      onAdvance={(actionId, status) => handleAdvance(indicator.id, actionId, status)}
+                      organizationId={organizationId}
+                      uploadedBy={profile.id}
+                      canRemoveEvidence={canRemoveEvidence}
+                      canDeleteRecords={canDeleteRecords}
+                      onDelete={(action) => handleDeletePlan(indicator.id, action)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}

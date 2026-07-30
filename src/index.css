@@ -1,0 +1,257 @@
+:root {
+  /* Paleta corporativa LeanProLogistic */
+  --color-primary: #1B365D;
+  --color-primary-light: #2c4d80;
+  --color-teal: #26A69A;
+  --color-gray: #B0B6BD;
+  --color-orange: #F57C00;
+
+  /* Semáforo de indicadores */
+  --color-ok: #26A69A;
+  --color-risk: #F57C00;
+  --color-fail: #D32F2F;
+
+  /* Marco (borde) de "cumple" en las tarjetas de KPI — un verde distinto
+     al teal corporativo (--color-ok), que también es el color de fondo de
+     los pilares Calidad y Personas: si el marco usara el mismo teal se
+     perdería contra el fondo de esos dos pilares. */
+  --color-marco-cumple: #2E7D32;
+
+  --color-bg: #F5F6F8;
+  --color-surface: #FFFFFF;
+  --color-border: #E1E4E8;
+  --color-text: #1F2933;
+  --color-text-muted: #5B6472;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  --shadow-card: 0 1px 3px rgba(27, 54, 93, 0.08), 0 1px 2px rgba(27, 54, 93, 0.06);
+
+  /* Escala de elevación — para dar profundidad y jerarquía sin ruido. */
+  --shadow-soft: 0 2px 10px rgba(27, 54, 93, 0.06);
+  --shadow-md: 0 10px 28px rgba(27, 54, 93, 0.10);
+  --shadow-lg: 0 22px 50px rgba(27, 54, 93, 0.16);
+
+  /* Degradados de marca — el azul "profundidad de planta" y el verde de avance. */
+  --grad-navy: linear-gradient(158deg, #24487d 0%, #1b365d 52%, #122740 100%);
+  --grad-teal: linear-gradient(135deg, #34c2b3 0%, #26a69a 100%);
+
+  /* Retícula tenue tipo plano de ingeniería — se superpone sobre el azul. */
+  --blueprint-grid: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+
+  /* Movimiento — curvas y tiempos consistentes en toda la app. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur: 240ms;
+  --dur-slow: 560ms;
+
+  /* Sombra estándar para TODAS las tarjetas de KPI (el número que se lee en
+     la reunión) — más marcada que --shadow-card a propósito, para que el
+     equipo reconozca "esto es un KPI" por el mismo diseño en cualquier
+     pantalla (Dashboard, Reunión por nivel, Tablero de indicador). */
+  --shadow-kpi: 0 6px 18px rgba(27, 54, 93, 0.22);
+  --color-kpi-target: var(--color-primary);
+
+  /* Indicadores marcados como "foco" (prioritarios) — azul Azure, distinto
+     del azul corporativo (--color-primary), para que un indicador en foco
+     se distinga de un vistazo incluso en el pilar Mantenimiento/Disponibilidad,
+     que ya usan el navy corporativo como su propio color de pilar. */
+  --color-focus: #0078D4;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Base un poco más grande para que todo se lea con más presencia — la
+     mayoría de los tamaños son en rem, así que la app entera escala junto. */
+  font-size: 105%;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Anillo azul para indicadores marcados como "foco" — mismo look en
+   cualquier tarjeta de KPI (Dashboard general, por eje, por nivel, Tablero),
+   sin importar el color de su semáforo. !important porque cada tarjeta ya
+   fija su propio box-shadow con la misma especificidad (una sola clase) y
+   el orden de carga de esos CSS por componente no está garantizado. */
+.kpi-focus {
+  box-shadow: 0 0 0 3px var(--color-focus), var(--shadow-kpi) !important;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* Envuelve las tablas para que solo ellas hagan scroll horizontal en
+   pantallas angostas, en vez de arrastrar todo el contenido de la página. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Los campos de formulario dentro de un grid/flex no se encogen por
+   debajo de su ancho intrínseco a menos que se anule min-width: esto
+   evita que inputs/selects se salgan de columnas angostas (tarjetas
+   laterales, filas de 3 campos en móvil, etc). */
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+h1, h2, h3, h4 {
+  color: var(--color-primary);
+  margin: 0;
+}
+
+/* Jerarquía de título más firme y "de instrumento" — el h1 de cada pantalla
+   ancla la vista con peso y un interletrado ligeramente cerrado. */
+h1 {
+  font-size: clamp(1.5rem, 1.2rem + 1.1vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+
+/* ============================================================
+   Encabezado consistente de pantalla (componente PageHeader).
+   ============================================================ */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.page-head__main {
+  min-width: 0;
+}
+
+.page-head__eyebrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  margin-bottom: 7px;
+}
+
+.page-head__subtitle {
+  color: var(--color-text-muted);
+  margin: 8px 0 0;
+  max-width: 72ch;
+  line-height: 1.55;
+}
+
+.page-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   Movimiento base: entrada suave de pantallas y utilidades de
+   revelado escalonado. Todo se apaga con prefers-reduced-motion.
+   ============================================================ */
+@keyframes lpms-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lpms-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Pop de entrada para el resultado principal de una tarjeta de KPI — el
+   dato que más pesa en una decisión se separa del resto apenas se pinta. */
+@keyframes lpms-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Crecimiento de una barra de progreso desde 0 al montar — scaleX no
+   necesita saber el ancho final en %, así que sirve para cualquier valor. */
+@keyframes lpms-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Cada pantalla entra con un desvanecido ascendente sutil. */
+.app-content > * {
+  animation: lpms-fade-up var(--dur-slow) var(--ease-out) both;
+}
+
+.reveal {
+  opacity: 0;
+  animation: lpms-fade-up var(--dur-slow) var(--ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,552 @@
+.page-subtitle {
+  color: var(--color-text-muted);
+  margin: 4px 0 20px;
+}
+
+/* ============================================================
+   Hero de "Ejes de desempeño": el estado de la organización de un
+   vistazo + el ciclo de mejora continua como firma visual.
+   ============================================================ */
+.overview-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  overflow: hidden;
+  background: var(--grad-navy);
+  color: #fff;
+  border-radius: var(--radius-xl);
+  padding: 30px 34px;
+  margin-bottom: 22px;
+  box-shadow: var(--shadow-lg);
+}
+
+.overview-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--blueprint-grid);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(120% 120% at 80% 20%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(120% 120% at 80% 20%, #000 0%, transparent 72%);
+  pointer-events: none;
+}
+
+.overview-hero__body {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.overview-hero__eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  margin-bottom: 10px;
+}
+
+.overview-hero h1 {
+  color: #fff;
+  font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem);
+}
+
+.overview-hero__lead {
+  margin: 10px 0 20px;
+  max-width: 46ch;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+  font-size: 0.96rem;
+}
+
+.overview-hero__stats {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.overview-hero__health {
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-hero__health-value {
+  font-size: clamp(2.6rem, 2rem + 2.4vw, 3.6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #fff;
+}
+
+.overview-hero__health-unit {
+  font-size: 0.5em;
+  font-weight: 700;
+  color: var(--color-teal);
+  margin-left: 2px;
+}
+
+.overview-hero__health-label {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 20ch;
+}
+
+.overview-hero__mini {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 26px;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.overview-hero__mini li {
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.overview-hero__mini b {
+  color: #fff;
+  font-size: 1.05rem;
+  margin-right: 4px;
+}
+
+.overview-hero__mini .is-risk b {
+  color: #ffc27a;
+}
+
+.overview-hero__mini .is-fail b {
+  color: #ff9a94;
+}
+
+.overview-hero__art {
+  position: relative;
+  flex: 0 0 auto;
+  width: 168px;
+  height: 168px;
+}
+
+@media (max-width: 720px) {
+  .overview-hero {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    padding: 24px 22px;
+  }
+  .overview-hero__art {
+    width: 118px;
+    height: 118px;
+    align-self: center;
+  }
+}
+
+.axes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.axis-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-top: 5px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 22px 18px;
+  text-decoration: none;
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 116px;
+  font-weight: 700;
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+
+.axis-card__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  flex-shrink: 0;
+  color: #fff;
+  box-shadow: 0 6px 14px -4px rgba(27, 54, 93, 0.5);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+/* Halo del color del propio pilar: un lavado muy tenue que nace bajo la
+   insignia y le da identidad a cada tarjeta sin competir con el dato.
+   --axis-color lo inyecta la página desde el catálogo de ejes. */
+.axis-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(130px 96px at 20% 0%, var(--axis-color, transparent), transparent 72%);
+  opacity: 0.12;
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.axis-card > * {
+  position: relative;
+}
+
+.axis-card__name {
+  font-size: 1.08rem;
+  line-height: 1.25;
+  margin-top: auto;
+}
+
+.axis-card__go {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  font-size: 1.15rem;
+  color: var(--color-teal);
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+
+/* Realce al pasar el puntero — solo donde existe un puntero real. Sin este
+   filtro, el móvil hereda el estado :hover "pegado" tras cada toque y, peor,
+   deja la flecha en opacity: 0 de forma permanente (ver bloque táctil). */
+@media (hover: hover) {
+  .axis-card__go {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+
+  .axis-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+  }
+
+  .axis-card:hover::before {
+    opacity: 0.2;
+  }
+
+  /* El ícono cobra vida al pasar por la tarjeta: un pequeño impulso. */
+  .axis-card:hover .axis-card__badge {
+    transform: scale(1.08) rotate(-4deg);
+  }
+
+  .axis-card:hover .axis-card__go {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* En pantallas táctiles no hay hover: la flecha se muestra siempre (atenuada,
+   para que indique "esto lleva a algún lado" sin gritar). */
+@media (hover: none) {
+  .axis-card__go {
+    opacity: 0.55;
+  }
+}
+
+/* Respuesta al toque — el equivalente táctil del realce de escritorio: la
+   tarjeta se hunde un poco bajo el dedo. Funciona en ambos mundos. */
+.axis-card:active {
+  transform: translateY(-1px) scale(0.985);
+  box-shadow: var(--shadow-md);
+}
+
+.axis-card:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
+.period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.indicators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Cada .indicator-cell ocupa 2 renglones (tarjeta + panel de abajo, ej.
+   diagnóstico o acciones a vencer) y usa subgrid para tomar prestados los
+   renglones del grid EXTERNO en vez de medirse solo: así el renglón 1 (las
+   tarjetas) se dimensiona por la tarjeta más alta de esa fila y el renglón
+   2 (el panel) por el panel más alto — el límite entre tarjeta y panel
+   queda parejo en toda la fila, sin importar que un KPI numérico (con
+   línea de "Objetivo") sea unos píxeles más alto que uno binario (Sí/No)
+   o que un panel tenga más contenido que otro. align-items: stretch
+   (heredado del grid externo) hace que IndicatorCard y el panel de abajo
+   efectivamente CREZCAN hasta llenar su renglón — por eso IndicatorCard
+   tiene margin-top: auto en su sparkline, para absorber ese espacio extra
+   sin que el resto del contenido se separe raro. */
+.indicator-cell {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 2;
+  row-gap: 10px;
+}
+
+.indicator-diagnostic {
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  border-left: 3px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.indicator-diagnostic__label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.indicator-diagnostic__cause,
+.indicator-diagnostic__meta {
+  margin: 0 0 6px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.indicator-diagnostic__link {
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.indicator-diagnostic--sin_datos {
+  border-left-color: var(--color-gray);
+}
+
+.indicator-diagnostic--sin_datos .indicator-diagnostic__label {
+  color: var(--color-text-muted);
+}
+
+.indicator-diagnostic--sin_causa {
+  border-left-color: var(--color-risk);
+  background: rgba(245, 124, 0, 0.08);
+}
+
+.indicator-diagnostic--sin_causa .indicator-diagnostic__label {
+  color: var(--color-risk);
+}
+
+.indicator-diagnostic--falta_gestion {
+  border-left-color: var(--color-fail);
+  background: rgba(211, 47, 47, 0.08);
+}
+
+.indicator-diagnostic--falta_gestion .indicator-diagnostic__label {
+  color: var(--color-fail);
+}
+
+.indicator-diagnostic--falta_eficacia {
+  border-left-color: var(--color-risk);
+  background: rgba(245, 124, 0, 0.08);
+}
+
+.indicator-diagnostic--falta_eficacia .indicator-diagnostic__label {
+  color: var(--color-risk);
+}
+
+.level-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.level-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.level-tab {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.level-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.level-site-select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.level-section {
+  margin-bottom: 28px;
+}
+
+.level-section h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.panorama-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.panorama-kpi {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panorama-kpi__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.panorama-kpi__value {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.panorama-kpi__value--ok {
+  color: var(--color-ok);
+}
+
+.panorama-kpi__value--risk {
+  color: var(--color-risk);
+}
+
+.panorama-kpi__value--fail {
+  color: var(--color-fail);
+}
+
+.panorama-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.panorama-card h2 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.panorama-card__subtitle {
+  margin: 0 0 16px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.panorama-composition {
+  display: flex;
+  gap: 2px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.panorama-composition__segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3px;
+}
+
+.panorama-composition__label {
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.panorama-composition__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.panorama-composition__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.panorama-composition__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.panorama-section-title {
+  font-size: 1.15rem;
+  margin: 28px 0 14px;
+}
+
+.exceptions-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.exceptions-table th,
+.exceptions-table td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.exceptions-table .axis-chip {
+  color: white;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.exceptions-footnote {
+  margin-top: 16px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}

@@ -1,0 +1,518 @@
+.org-structure-page {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.org-structure-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.org-structure-card h2 {
+  font-size: 1rem;
+  margin-bottom: 14px;
+}
+
+.org-structure-card__subtitle {
+  margin: -8px 0 14px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.org-structure-axes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* Con 4 columnas fijas, una tarjeta angosta le deja al nombre del pilar muy
+   poco espacio junto al checkbox y la insignia — por debajo de cierto ancho
+   hay que bajar a menos columnas o el texto se parte carácter por carácter
+   en vez de por palabra completa. */
+@media (max-width: 900px) {
+  .org-structure-axes {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .org-structure-axes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-structure-axis-option {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-weight: 600;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+  /* Sin esto, el ítem con el nombre más largo ("Disponibilidad") le gana
+     espacio a los demás en vez de repartirse el ancho en partes iguales —
+     un elemento de grid/flex no se encoge por debajo del ancho de su
+     contenido a menos que se le diga explícitamente. */
+  min-width: 0;
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+.org-structure-axis-option__name {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* Solo donde hay puntero real: en táctil el :hover se queda "pegado" tras el
+   toque y la tarjeta permanece levantada aunque el dedo ya se fue. */
+@media (hover: hover) {
+  .org-structure-axis-option:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Respuesta al toque: el pilar se hunde bajo el dedo. Es la única
+   confirmación de "te leí" que recibe quien usa la app en el piso, sin
+   puntero. */
+.org-structure-axis-option:active {
+  transform: scale(0.98);
+}
+
+/* El eje activo se ve "encendido" — borde de acento y elevación. */
+.org-structure-axis-option--on {
+  border-color: var(--color-teal);
+  box-shadow: 0 0 0 1px var(--color-teal), var(--shadow-soft);
+}
+
+.org-structure-axis-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 5px 12px -4px rgba(27, 54, 93, 0.5);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .org-structure-axis-option:hover .org-structure-axis-badge {
+    transform: scale(1.08) rotate(-4deg);
+  }
+}
+
+/* Ítem inactivo: la insignia se atenúa hasta que se enciende. */
+.org-structure-axis-option:not(.org-structure-axis-option--on) .org-structure-axis-badge {
+  filter: grayscale(0.55) opacity(0.55);
+}
+
+.org-structure-add-row--site {
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.org-structure-add-row--site button {
+  flex: none;
+  background: var(--color-teal);
+  color: white;
+  border: none;
+}
+
+.org-structure-add-row--site button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.org-structure-tree {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+
+.org-structure-bu {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.org-structure-bu ul {
+  margin: 8px 0;
+  padding-left: 20px;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.org-structure-add-row {
+  display: flex;
+  /* wrap: el botón ("+ Agregar unidad de negocio") lleva white-space: nowrap,
+     así que su ancho mínimo es el del texto completo. Sin wrap se quedaba con
+     casi toda la fila y el input se encogía hasta mostrar dos letras ("Nu…")
+     en móvil; ahora el botón baja a la línea siguiente y el campo se lee. */
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.org-structure-add-row--top {
+  margin-top: 0;
+}
+
+/* Base real (no 0) para que el wrap de arriba tenga contra qué decidir: con
+   flex-basis 0 todos los campos caben "en teoría" en cualquier ancho y nunca
+   se separan en varias líneas. Cubre también el <select> de la fila de sitios,
+   que antes tenía su propia regla y quedaba anulada por esta por venir después
+   con la misma especificidad. */
+.org-structure-add-row input,
+.org-structure-add-row select {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.org-structure-add-row button {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* .button-primary (botón teal, usado para el CTA principal "+ Agregar
+   unidad de negocio") necesita más especificidad que la regla genérica de
+   arriba para no perder su fondo — si no, se ve como un botón fantasma. */
+.org-structure-add-row button.button-primary {
+  border-color: var(--color-teal);
+  background: var(--color-teal);
+  color: white;
+}
+
+.org-structure-sites-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.org-structure-sites-table th,
+.org-structure-sites-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+  font-size: 0.9rem;
+}
+
+.org-structure-sites-table select {
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.org-structure-locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.org-structure-location-chip {
+  background: var(--color-bg);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.org-structure-blocked {
+  background: rgba(245, 124, 0, 0.08);
+  border: 1px solid var(--color-orange);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.org-structure-blocked p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-orange);
+  font-weight: 600;
+}
+
+.org-structure-blocked__deactivate {
+  align-self: flex-start;
+  background: var(--color-orange);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.org-structure-blocked__close {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.org-structure-item-actions {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.org-structure-item-actions button {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0 3px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+/* El glifo mide ~14px: con puntero se acierta, con el pulgar no. En táctil se
+   agranda el área REAL (padding + separación), no con un pseudo-elemento
+   invisible: "eliminar" está pegado a "renombrar", y dos áreas invisibles de
+   40px se solaparían — el dedo apuntaría a ✎ y podría caer en ×. Con
+   separación real cada objetivo es propio y el borrado no se toca por error. */
+@media (hover: none) {
+  .org-structure-item-actions {
+    gap: 10px;
+    margin-left: 10px;
+  }
+
+  .org-structure-item-actions button {
+    padding: 9px 11px;
+    font-size: 1rem;
+  }
+}
+
+.org-structure-item-actions button:active {
+  transform: scale(0.86);
+}
+
+.org-structure-item-actions button:hover {
+  color: var(--color-primary);
+}
+
+.org-structure-item-actions__delete:hover {
+  color: var(--color-fail) !important;
+}
+
+.org-structure-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+  font-size: 0.8rem;
+  color: var(--color-fail);
+}
+
+.org-structure-confirm button {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.org-structure-confirm__yes {
+  background: var(--color-fail) !important;
+  border-color: var(--color-fail) !important;
+  color: white;
+}
+
+.org-structure-rename {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.org-structure-rename input {
+  padding: 4px 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  min-width: 140px;
+}
+
+.org-structure-rename button {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.org-structure-rename__save {
+  background: var(--color-teal) !important;
+  border-color: var(--color-teal) !important;
+  color: white;
+}
+
+.org-structure-rename__save:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.org-results-legend {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.org-results-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.org-results-row--bu {
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.org-results-region {
+  padding-left: 16px;
+  border-left: 2px solid var(--color-border);
+  margin: 8px 0 8px 4px;
+}
+
+.org-results-sites {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 16px;
+}
+
+.org-results-badges {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.org-results-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0 6px;
+  color: white;
+}
+
+.org-results-badge--cumple {
+  background: var(--color-ok);
+}
+
+.org-results-badge--riesgo {
+  background: var(--color-risk);
+}
+
+.org-results-badge--incumple {
+  background: var(--color-fail);
+}
+
+.org-results-badge--sin_datos {
+  background: var(--color-gray);
+}
+
+.org-structure-responsibles-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.org-structure-responsibles-table th,
+.org-structure-responsibles-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.org-structure-responsibles-axis-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.org-structure-responsibles-cell {
+  min-width: 160px;
+  white-space: normal;
+}
+
+.org-structure-responsible-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-bg);
+  border-radius: 999px;
+  padding: 3px 4px 3px 10px;
+  margin: 0 4px 4px 0;
+  font-size: 0.78rem;
+  color: var(--color-text);
+}
+
+.org-structure-responsible-chip button {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.org-structure-responsible-chip button:hover {
+  color: var(--color-fail);
+}
+
+.org-structure-responsible-add {
+  display: block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+}

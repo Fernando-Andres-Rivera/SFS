@@ -1,0 +1,604 @@
+// Tipos que reflejan el esquema de Supabase (supabase/migrations).
+// Se mantienen manualmente en la Fase 1; en una fase posterior se pueden
+// generar automáticamente con `supabase gen types typescript`.
+
+export type UserRole =
+  | 'admin_consultora'
+  | 'admin_cliente'
+  | 'gerente'
+  | 'administrativo'
+  | 'operativo'
+
+export const USER_ROLE_LABEL: Record<UserRole, string> = {
+  admin_consultora: 'Admin Consultora',
+  admin_cliente: 'Admin Cliente',
+  gerente: 'Gerente',
+  administrativo: 'Administrativo',
+  operativo: 'Operativo',
+}
+
+export type IndicatorFrequency = 'diaria' | 'semanal' | 'quincenal' | 'mensual' | 'trimestral'
+export type ImprovementDirection = 'mayor_mejor' | 'menor_mejor'
+export type PdcaStatus = 'planificar' | 'hacer' | 'verificar' | 'actuar' | 'cerrado'
+export type CausalMethodology = '5_porques' | 'ishikawa' | 'causas_estandar'
+
+/** 'numerico' = valor contra un umbral (lo de siempre). 'binario' = KPI de
+ * ejecución tipo "¿se hizo?" — se captura Sí/No, se guarda como 1/0, y el
+ * objetivo siempre es "Sí" (no se define un número). 'razon' = programado
+ * vs. real (ej. efectivos programados vs. asistieron, capacidad o
+ * disponibilidad de equipos) — la meta VARÍA cada período, así que se
+ * captura junto con el resultado en vez de fijarse de antemano; `value`
+ * guarda el % ya calculado y el objetivo siempre es 100. */
+export type IndicatorValueType = 'numerico' | 'binario' | 'razon'
+
+export const INDICATOR_VALUE_TYPE_LABEL: Record<IndicatorValueType, string> = {
+  numerico: 'Numérico (contra un objetivo)',
+  binario: 'Cumplimiento (Sí / No)',
+  razon: 'Programado vs Real (%)',
+}
+
+/** Formatea el último valor de un indicador para mostrarlo — "Sí"/"No" para
+ * indicadores binarios, porcentaje para razón, número + unidad para el
+ * resto. */
+export function formatIndicatorValue(
+  value: number | null,
+  valueType: IndicatorValueType,
+  unit: string,
+): string {
+  if (value === null) return '—'
+  if (valueType === 'binario') {
+    // Una lectura individual siempre es exactamente 0 o 1 (Sí/No); un valor
+    // fraccionario solo puede venir de promediar varias del período — ahí lo
+    // que importa es el % de veces que fue Sí, no un Sí/No único.
+    if (!Number.isInteger(value)) return `${Math.round(value * 1000) / 10}%`
+    return value >= 1 ? 'Sí' : 'No'
+  }
+  if (valueType === 'razon') return `${Math.round(value * 10) / 10}%`
+  return unit ? `${value} ${unit}` : String(value)
+}
+
+/** El detalle detrás del % de un indicador de razón (real sobre programado)
+ * o de un binario en modo "promedio" (Sí sobre total) — ej. "18/20". Solo
+ * existe para esos dos casos: un numérico no tiene un "conteo sobre total"
+ * equivalente, y un binario con último/máximo/mínimo ya da un Sí/No limpio
+ * sin fracción de por medio. */
+export interface AggregateBreakdown {
+  count: number
+  total: number
+}
+
+/** Texto "detalle · %" para mostrar junto al resultado (ej. "18/20 · 90%"). */
+export function formatBreakdown(breakdown: AggregateBreakdown | null): string | null {
+  if (!breakdown || breakdown.total === 0) return null
+  const pct = Math.round((breakdown.count / breakdown.total) * 1000) / 10
+  return `${breakdown.count}/${breakdown.total} · ${pct}%`
+}
+
+/** Redondea a 1 decimal solo si hace falta — evita "20.333333333333332" en
+ * los chips cuando programado/real vienen con decimales. */
+function formatChipNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10)
+}
+
+export interface CardMetric {
+  label: string
+  value: string
+  tone: 'positive' | 'negative' | 'neutral' | 'muted'
+}
+
+/**
+ * Fondo estándar de una tarjeta de KPI: un degradado que solo oscurece
+ * `baseColor` mezclándolo con un navy casi negro (nunca con otro tono
+ * saturado, para no ensuciar el color — ver IndicatorCard.tsx). Mismo
+ * cálculo para el color del pilar y para el azul de "foco", así ambos casos
+ * se ven consistentes.
+ */
+export function pillarCardBackground(baseColor: string): string {
+  return `linear-gradient(155deg, color-mix(in srgb, ${baseColor} 58%, #0d1b2a 42%) 0%, color-mix(in srgb, ${baseColor} 32%, #0d1b2a 68%) 100%)`
+}
+
+/**
+ * Las 3 métricas secundarias estándar de una tarjeta de KPI: Real/Sí,
+ * Programado/No y el % para razón y binario en modo "promedio"; Días sin
+ * evento/Días con evento y el % para un numérico que suma un conteo de
+ * eventos (ej. Actos Inseguros, Reclamaciones del Cliente) — los únicos
+ * casos con un desglose count/total (ver aggregateBreakdown en periods.ts).
+ * Donde no exista esa cantidad de medidas se deja "Sin datos" en las 3 —
+ * mismo molde de tarjeta para todos los tipos.
+ */
+export function computeCardMetrics(valueType: IndicatorValueType, breakdown: AggregateBreakdown | null): CardMetric[] {
+  if (breakdown && breakdown.total !== 0) {
+    const pct = Math.round((breakdown.count / breakdown.total) * 1000) / 10
+    if (valueType === 'binario') {
+      return [
+        { label: 'Sí', value: formatChipNumber(breakdown.count), tone: 'positive' },
+        { label: 'No', value: formatChipNumber(breakdown.total - breakdown.count), tone: 'negative' },
+        { label: '%', value: `${pct}%`, tone: 'neutral' },
+      ]
+    }
+    if (valueType === 'razon') {
+      return [
+        { label: 'Real', value: formatChipNumber(breakdown.count), tone: 'positive' },
+        { label: 'Programado', value: formatChipNumber(breakdown.total), tone: 'neutral' },
+        { label: '%', value: `${pct}%`, tone: 'neutral' },
+      ]
+    }
+    if (valueType === 'numerico') {
+      return [
+        { label: 'Días sin evento', value: formatChipNumber(breakdown.count), tone: 'positive' },
+        { label: 'Días con evento', value: formatChipNumber(breakdown.total - breakdown.count), tone: 'negative' },
+        { label: '%', value: `${pct}%`, tone: 'neutral' },
+      ]
+    }
+  }
+  return [
+    { label: 'Sin datos', value: '—', tone: 'muted' },
+    { label: 'Sin datos', value: '—', tone: 'muted' },
+    { label: 'Sin datos', value: '—', tone: 'muted' },
+  ]
+}
+
+export const CAUSAL_METHODOLOGY_LABEL: Record<CausalMethodology, string> = {
+  ishikawa: 'Ishikawa',
+  '5_porques': '5 Porqués',
+  causas_estandar: 'Causas posibles',
+}
+
+/** Cómo combinar varias mediciones dentro de un mismo período al revisar resultados. */
+export type AggregationMethod = 'suma' | 'promedio' | 'ultimo' | 'maximo' | 'minimo'
+
+export const AGGREGATION_METHOD_LABEL: Record<AggregationMethod, string> = {
+  suma: 'Suma del período',
+  promedio: 'Promedio del período',
+  ultimo: 'Último valor capturado',
+  maximo: 'Máximo del período',
+  minimo: 'Mínimo del período',
+}
+
+export const AGGREGATION_METHOD_HELP: Record<AggregationMethod, string> = {
+  suma: 'Ej. accidentes, defectos, paradas — cuentas que se acumulan en el período.',
+  promedio: 'Ej. % de cumplimiento, calificaciones — tasas que se promedian.',
+  ultimo: 'Ej. nivel de inventario — se queda con la medición más reciente del período.',
+  maximo: 'Ej. pico de una variable durante el período.',
+  minimo: 'Ej. el peor valor alcanzado durante el período.',
+}
+
+/** Ventana de tiempo usada para agrupar la mini-tendencia de un indicador. */
+export type PeriodType = 'dia' | 'semana' | 'quincena' | 'mes' | 'trimestre'
+
+export interface Organization {
+  id: string
+  name: string
+  industry: string | null
+  logo_url: string | null
+  active: boolean
+  created_at: string
+  /** true si es una organización Demo auto-creada por un registro público
+   * (lead). Se excluye del switcher y de la lista de clientes reales; solo
+   * aparece en el reporte de registros. */
+  is_demo: boolean
+}
+
+export interface Site {
+  id: string
+  organization_id: string
+  name: string
+  address: string | null
+  active: boolean
+  org_unit_id: string | null
+  operation_start_date: string | null
+}
+
+/** Nivel 2 (Unidad de Negocio) o Nivel 3 (Región) de la estructura organizacional. */
+export interface OrgUnit {
+  id: string
+  organization_id: string
+  parent_id: string | null
+  level: 2 | 3
+  name: string
+  active: boolean
+}
+
+/** Horario de la reunión de un nivel: hora de inicio + qué día evalúa esa
+ * reunión (0 = hoy, -1 = ayer, -2 = antier…) + en qué días de la semana se
+ * reúne (no toda cascada se reúne a diario) — no toda reunión evalúa el
+ * dato del mismo día en que ocurre. `site_id` nulo = horario general de la
+ * organización (aplica a todo sitio sin horario propio); con valor, anula
+ * el general solo para ese sitio. */
+export interface LevelCaptureCutoff {
+  id: string
+  organization_id: string
+  level: 1 | 2 | 3
+  site_id: string | null
+  cutoff_time: string // 'HH:MM:SS'
+  evaluated_day_offset: number // 0, -1, -2…
+  /** Sigue Date.getDay(): 0=domingo, 1=lunes … 6=sábado. */
+  weekdays: number[]
+  created_by: string | null
+  created_at: string
+}
+
+/** El horario que aplica a un indicador de este nivel/sitio: prioriza el
+ * horario específico de su sitio y, si no existe, cae al horario general
+ * (site_id nulo) de la organización — misma regla que usa el trigger
+ * enforce_measurement_capture_lock en la base de datos. */
+export function findApplicableCutoff(
+  cutoffs: LevelCaptureCutoff[],
+  level: number | undefined,
+  siteId: string | null,
+): LevelCaptureCutoff | null {
+  if (level === undefined) return null
+  if (siteId) {
+    const specific = cutoffs.find((c) => c.level === level && c.site_id === siteId)
+    if (specific) return specific
+  }
+  return cutoffs.find((c) => c.level === level && c.site_id === null) ?? null
+}
+
+export const DAY_OFFSET_LABEL: Record<number, string> = {
+  0: 'Hoy (mismo día)',
+  [-1]: 'Ayer (día anterior)',
+  [-2]: 'Antier (2 días antes)',
+  [-3]: 'Hace 3 días',
+}
+
+/** Días de la semana en el orden en que se muestran en pantalla (lunes
+ * primero) — el `value` es el que usa Date.getDay() internamente. */
+export const WEEKDAY_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mié' },
+  { value: 4, label: 'Jue' },
+  { value: 5, label: 'Vie' },
+  { value: 6, label: 'Sáb' },
+  { value: 0, label: 'Dom' },
+]
+
+function toLocalDateString(d: Date): string {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * Última fecha que ya "cerró": retrocede desde hoy hasta el día de reunión
+ * (de weekdays) más reciente que ya pasó su hora de corte, y le resta el
+ * desfase de evaluación. Cualquier fecha <= a esta ya fue expuesta en su
+ * reunión — a diferencia de la regla anterior, el cierre solo avanza hacia
+ * adelante en el tiempo: una fecha atrasada no "se reabre" al día
+ * siguiente solo porque ya no es la que evalúa la reunión de hoy. La
+ * misma regla se aplica también en la base de datos (trigger
+ * enforce_measurement_capture_lock) — este cálculo es solo para que la
+ * pantalla lo muestre sin esperar el error del servidor.
+ */
+export function computeLastClosedDate(
+  schedule: { cutoff_time: string; evaluated_day_offset: number; weekdays: number[] } | null,
+  now: Date,
+): string | null {
+  if (!schedule) return null
+  const allowedDays = schedule.weekdays && schedule.weekdays.length > 0 ? schedule.weekdays : [0, 1, 2, 3, 4, 5, 6]
+  const [hours, minutes] = schedule.cutoff_time.split(':').map(Number)
+
+  let meetingDate: Date | null = null
+  for (let i = 0; i <= 7; i++) {
+    const candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+    if (!allowedDays.includes(candidate.getDay())) continue
+    if (i === 0) {
+      const cutoffMoment = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes)
+      if (now < cutoffMoment) continue
+    }
+    meetingDate = candidate
+    break
+  }
+  if (!meetingDate) return null
+
+  const closed = new Date(meetingDate)
+  closed.setDate(closed.getDate() + schedule.evaluated_day_offset)
+  return toLocalDateString(closed)
+}
+
+/** true si esta fecha ya cerró (pasó la reunión que la evalúa, sin importar
+ * hace cuánto) y por lo tanto no se puede editar sin autorización. */
+export function isDateClosedForCapture(
+  schedule: { cutoff_time: string; evaluated_day_offset: number; weekdays: number[] } | null,
+  periodDate: string,
+  now: Date,
+): boolean {
+  const lastClosed = computeLastClosedDate(schedule, now)
+  if (!lastClosed) return false
+  return periodDate <= lastClosed
+}
+
+export type ExposureFrequency = 'semanal' | 'quincenal' | 'mensual'
+
+/** Periodicidad de exposición/reporte del Dashboard — una sola cadencia por
+ * organización (no por pilar). weekday sigue Date.getDay(): 0=domingo…
+ * 6=sábado; solo aplica a semanal/quincenal. day_of_month solo aplica a
+ * mensual (se recorta al último día si el mes es más corto). */
+export interface ExposureSchedule {
+  id: string
+  organization_id: string
+  frequency: ExposureFrequency
+  weekday: number | null
+  day_of_month: number | null
+  start_date: string
+  exposure_time: string | null // 'HH:MM:SS' o null
+  created_by: string | null
+}
+
+export const WEEKDAY_LABEL = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+
+/** Nivel 5+ (Instalación y más abajo) de la estructura organizacional, colgado de un sitio. */
+export interface SiteLocation {
+  id: string
+  site_id: string
+  parent_id: string | null
+  level: number
+  name: string
+  active: boolean
+}
+
+export const ORG_STRUCTURE_LEVEL_LABEL: Record<number, string> = {
+  1: 'Organización',
+  2: 'Unidad de Negocio',
+  3: 'Región',
+  4: 'Sitio',
+  5: 'Instalación',
+  6: 'Área Funcional',
+  7: 'Proceso',
+  8: 'Subproceso',
+  9: 'Línea / Célula',
+  10: 'Estación / Puesto',
+  11: 'Activo',
+  12: 'Ubicación Física',
+}
+
+export interface Profile {
+  id: string
+  organization_id: string
+  role: UserRole
+  full_name: string
+  email: string
+  active: boolean
+}
+
+export interface ProfileSite {
+  id: string
+  profile_id: string
+  site_id: string
+}
+
+export interface Axis {
+  id: string
+  code: string
+  name: string
+  color: string
+  icon: string | null
+  sort_order: number
+}
+
+export interface OrganizationAxis {
+  id: string
+  organization_id: string
+  axis_id: string
+  active: boolean
+}
+
+export interface Indicator {
+  id: string
+  organization_id: string
+  site_id: string | null
+  site_location_id: string | null
+  axis_id: string
+  level: 1 | 2 | 3
+  name: string
+  definition: string | null
+  calculation_formula: string | null
+  unit: string
+  frequency: IndicatorFrequency
+  improvement_direction: ImprovementDirection
+  aggregation_method: AggregationMethod
+  responsible_id: string | null
+  active: boolean
+  created_at: string
+  /** Si es true, el valor no se captura a mano: se calcula sumando/promediando
+   * (según aggregation_method) los valores de sus indicadores hijo. */
+  is_calculated: boolean
+  value_type: IndicatorValueType
+  /** Indicador prioritario para el equipo — se resalta con un borde azul
+   * muy visible en las tarjetas, sin importar su semáforo. */
+  is_focus: boolean
+}
+
+export interface Unit {
+  id: string
+  organization_id: string
+  name: string
+  created_by: string | null
+  created_at: string
+}
+
+export interface IndicatorLink {
+  id: string
+  child_indicator_id: string
+  parent_indicator_id: string
+}
+
+export interface Target {
+  id: string
+  indicator_id: string
+  period_year: number
+  period_month: number | null
+  target_value: number
+  created_by: string | null
+}
+
+export interface Measurement {
+  id: string
+  indicator_id: string
+  period_date: string
+  value: number
+  comment: string | null
+  site_location_id: string | null
+  captured_by: string | null
+  created_at: string
+}
+
+// ------------------------------------------------------------
+// Módulo de Seguridad y Salud en el Trabajo (SST)
+// ------------------------------------------------------------
+
+export type SafetyEventType = 'accidente' | 'incidente' | 'acto_inseguro' | 'condicion_insegura'
+export type AccidentSeverity = 'fatal' | 'serio' | 'leve'
+
+export const SAFETY_EVENT_TYPE_LABEL: Record<SafetyEventType, string> = {
+  accidente: 'Accidente',
+  incidente: 'Incidente (sin daño)',
+  acto_inseguro: 'Acto inseguro',
+  condicion_insegura: 'Condición insegura',
+}
+
+export const ACCIDENT_SEVERITY_LABEL: Record<AccidentSeverity, string> = {
+  fatal: 'Fatal',
+  serio: 'Serio (>2 días de incapacidad)',
+  leve: 'Leve (<2 días de incapacidad)',
+}
+
+export interface SafetyEvent {
+  id: string
+  organization_id: string
+  site_id: string
+  event_type: SafetyEventType
+  event_date: string
+  severity: AccidentSeverity | null
+  disability_days: number | null
+  workers_affected: number | null
+  description: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export const ISHIKAWA_CATEGORIES = [
+  'mano_de_obra',
+  'metodo',
+  'maquina',
+  'material',
+  'medicion',
+  'medio_ambiente',
+] as const
+
+export type IshikawaCategoryKey = (typeof ISHIKAWA_CATEGORIES)[number]
+
+export const ISHIKAWA_CATEGORY_LABEL: Record<IshikawaCategoryKey, string> = {
+  mano_de_obra: 'Mano de obra',
+  metodo: 'Método',
+  maquina: 'Máquina',
+  material: 'Material',
+  medicion: 'Medición',
+  medio_ambiente: 'Medio ambiente',
+}
+
+export interface IshikawaData {
+  categories: Record<IshikawaCategoryKey, string[]>
+}
+
+export interface FiveWhysData {
+  whys: string[]
+}
+
+export interface CausalAnalysis {
+  id: string
+  organization_id: string
+  indicator_id: string
+  measurement_id: string | null
+  methodology: CausalMethodology
+  description: string | null
+  root_cause: string | null
+  data: Partial<IshikawaData & FiveWhysData>
+  // Solo tiene sentido para metodología 'causas_estandar': ponderación libre
+  // (costo, horas, unidades afectadas…) para que el Pareto por indicador
+  // ordene por impacto acumulado, no solo por número de ocurrencias.
+  impact_value: number
+  created_by: string | null
+  created_at: string
+}
+
+export interface CauseCategory {
+  id: string
+  organization_id: string
+  parent_id: string | null
+  name: string
+  active: boolean
+  created_by: string | null
+  created_at: string
+}
+
+export interface CausalAnalysisCause {
+  id: string
+  causal_analysis_id: string
+  cause_category_id: string
+}
+
+/**
+ * Nodo del árbol de causas PROPIO de un indicador (ej. Máquina -> Extrusora 3
+ * -> Motor para "daños mecánicos"), a diferencia de CauseCategory que es un
+ * árbol compartido por toda la organización. Alimenta la pestaña "Causas
+ * posibles" del análisis causal.
+ */
+export interface IndicatorCause {
+  id: string
+  indicator_id: string
+  parent_id: string | null
+  name: string
+  active: boolean
+  created_by: string | null
+  created_at: string
+}
+
+export interface CausalAnalysisIndicatorCause {
+  id: string
+  causal_analysis_id: string
+  indicator_cause_id: string
+}
+
+/** Frase de "causa raíz identificada" ya usada antes para este indicador —
+ * catálogo para que el campo sea un desplegable, no texto libre sin control. */
+export interface IndicatorRootCause {
+  id: string
+  indicator_id: string
+  text: string
+  created_by: string | null
+  created_at: string
+}
+
+export interface ActionPlan {
+  id: string
+  organization_id: string
+  causal_analysis_id: string | null
+  indicator_id: string
+  description: string
+  responsible_id: string | null
+  due_date: string | null
+  event_date: string | null
+  closed_at: string | null
+  status: PdcaStatus
+  created_by: string | null
+  created_at: string
+}
+
+/**
+ * Los 4 cuartos del círculo de avance del plan de acción (formato SMQDC):
+ * vacío (problema definido) -> lanzada -> en ejecución -> terminada -> eficaz.
+ * `actuar` existe en la base para flexibilidad futura pero no se usa en
+ * este control de 4 pasos.
+ */
+export const ACTION_PLAN_STEPS: { status: PdcaStatus; label: string; quarters: number }[] = [
+  { status: 'planificar', label: 'Acción lanzada', quarters: 1 },
+  { status: 'hacer', label: 'En ejecución', quarters: 2 },
+  { status: 'verificar', label: 'Terminada', quarters: 3 },
+  { status: 'cerrado', label: 'Eficaz', quarters: 4 },
+]
+
+/** Estado del semáforo de un indicador, derivado en el cliente. */
+export type SemaforoEstado = 'cumple' | 'riesgo' | 'incumple' | 'sin_datos'

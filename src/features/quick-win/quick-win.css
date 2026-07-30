@@ -1,0 +1,236 @@
+/* La WIN CARD es la tarjeta de la reunión y se lee de pie, proyectada o en
+   pantalla grande: ocupa todo el ancho disponible en vez de la columna
+   angosta que usan las pantallas de lectura. */
+.quick-win-page {
+  max-width: none;
+}
+
+.quick-win-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.quick-win-date {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.quick-win-date input {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.quick-win-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.quick-win-card h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.quick-win-card textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  resize: vertical;
+}
+
+.quick-win-problema-axis {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+  max-width: 260px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.quick-win-problema-axis select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-weight: 400;
+  font-family: inherit;
+}
+
+.quick-win-saving {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.quick-win-error {
+  color: var(--color-fail);
+  margin-bottom: 12px;
+}
+
+.quick-win-candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* Tarjeta de un win — la usa el panel de wins escalados de Nivel 2/3
+   (EscalatedQuickWins). La reunión de Nivel 1 ya no la usa: allí los wins se
+   escriben directo en los renglones de la WIN CARD. */
+.quick-win-candidate-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  border-left: 4px solid transparent;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-win-candidate-card--green {
+  border-left-color: var(--color-ok);
+  background: color-mix(in srgb, var(--color-ok) 6%, var(--color-surface));
+}
+
+.quick-win-candidate-card--red {
+  border-left-color: var(--color-fail);
+  background: color-mix(in srgb, var(--color-fail) 6%, var(--color-surface));
+}
+
+.quick-win-candidate-card__axis {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.quick-win-candidate-card__description {
+  font-weight: 600;
+  margin: 0;
+}
+
+.quick-win-candidate-card__meta {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.quick-win-candidate-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.quick-win-candidate-card__actions button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.quick-win-candidate-card__actions button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.quick-win-toggle {
+  border: none !important;
+  color: white !important;
+}
+
+.quick-win-toggle--green {
+  background: var(--color-ok) !important;
+}
+
+.quick-win-toggle--green:hover {
+  color: white !important;
+}
+
+.quick-win-toggle--red {
+  background: var(--color-fail) !important;
+}
+
+.quick-win-toggle--red:hover {
+  color: white !important;
+}
+
+.quick-win-candidate-card__site {
+  font-weight: 400;
+  text-transform: none;
+  color: var(--color-text-muted);
+  letter-spacing: normal;
+}
+
+.quick-win-candidate-card__escalated-note {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-risk);
+}
+
+.quick-win-candidate-card__delete {
+  display: block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 8px;
+  color: var(--color-fail);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.quick-win-escalate {
+  background: var(--color-bg) !important;
+  border: 1px solid var(--color-risk) !important;
+  color: var(--color-risk) !important;
+}
+
+.quick-win-escalate:hover {
+  background: var(--color-risk) !important;
+  color: white !important;
+}
+
+.quick-win-escalated {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  border-left: 4px solid var(--color-risk);
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.quick-win-escalated h2 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.quick-win-escalated__subtitle {
+  margin: 0 0 16px;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
