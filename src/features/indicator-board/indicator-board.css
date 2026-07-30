@@ -52,7 +52,7 @@
   border: 3px solid transparent;
   box-shadow: var(--shadow-kpi);
   color: #fff;
-  animation: lpms-fade-up var(--dur-slow) var(--ease-out) both;
+  animation: sfs-fade-up var(--dur-slow) var(--ease-out) both;
 }
 
 .board-result__header {
@@ -133,8 +133,8 @@
   font-size: 1.8rem;
   font-weight: 700;
   color: #fff;
-  /* @keyframes lpms-pop está en index.css. */
-  animation: lpms-pop var(--dur-slow) var(--ease-out) both;
+  /* @keyframes sfs-pop está en index.css. */
+  animation: sfs-pop var(--dur-slow) var(--ease-out) both;
 }
 
 .board-result__value small {
@@ -185,7 +185,7 @@
   padding: 10px 6px;
   border-radius: 10px;
   text-align: center;
-  animation: lpms-fade-up var(--dur) var(--ease-out) both;
+  animation: sfs-fade-up var(--dur) var(--ease-out) both;
 }
 
 .board-result__metric:nth-child(1) {

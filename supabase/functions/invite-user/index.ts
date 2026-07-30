@@ -32,7 +32,7 @@ function generateTempPassword(): string {
   const bytes = new Uint8Array(8)
   crypto.getRandomValues(bytes)
   const body = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
-  return `Lpms-${body}`
+  return `Sfs-${body}`
 }
 
 const CORS_HEADERS = {

@@ -1,17 +1,24 @@
-# Despliegue de LPMS
+# Despliegue de SFS
 
 La aplicación es un frontend estático (Vite + React) que habla directamente con
 Supabase. No hay servidor propio que administrar: se compila a archivos estáticos
 y se sirven desde Vercel. Toda la seguridad vive en las políticas RLS de Supabase.
 
+> **Pendiente de configuración.** SFS nace como réplica de LPMS, pero su
+> infraestructura es **independiente**: repositorio de GitHub propio y proyecto
+> de Supabase propio. Mientras eso no se configure, el `.env` local sigue
+> apuntando al Supabase de LPMS y **ambas apps comparten base de datos**. Los
+> pasos de abajo son el orden en que hay que cortar esa dependencia.
+
 ## 1. Subir el código a GitHub
 
-El repositorio ya está inicializado localmente. Falta conectarlo a un remoto:
+El repositorio ya está inicializado localmente. Falta conectarlo a un remoto
+**nuevo, distinto al de LPMS**:
 
 ```bash
-# Crea un repositorio vacío en github.com/<tu-cuenta>/lpms (privado)
-git remote add origin https://github.com/<tu-cuenta>/lpms.git
-git push -u origin main
+# Crea un repositorio vacío en github.com/<tu-cuenta>/sfs (privado)
+git remote add origin https://github.com/<tu-cuenta>/sfs.git
+git push -u origin master
 ```
 
 > El `.env` con la llave de Supabase **no** se sube — está en `.gitignore`. Las
@@ -20,7 +27,7 @@ git push -u origin main
 ## 2. Importar el proyecto en Vercel
 
 1. En [vercel.com](https://vercel.com) → **Add New → Project → Import Git Repository**.
-2. Elige el repositorio `lpms`.
+2. Elige el repositorio `sfs`.
 3. Vercel detecta **Vite** automáticamente. No cambies nada:
    - Framework Preset: `Vite`
    - Build Command: `npm run build`
@@ -30,20 +37,25 @@ git push -u origin main
 
 ## 3. Configurar las variables de entorno en Vercel
 
-En **Project Settings → Environment Variables**, agrega las dos (mismos valores
-que tu `.env` local):
+En **Project Settings → Environment Variables**, agrega las del **proyecto de
+Supabase propio de SFS** (no las de LPMS):
 
 | Nombre | Valor |
 |---|---|
-| `VITE_SUPABASE_URL` | `https://lnpjznpnmrstkgexuyre.supabase.co` |
+| `VITE_SUPABASE_URL` | `https://<proyecto-sfs>.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | tu `sb_publishable_...` (la llave *publishable*, segura de exponer) |
+| `VITE_APP_URL` | la URL pública de SFS (opcional; si se omite se usa el origen actual) |
 
-Marca ambas para los entornos **Production**, **Preview** y **Development**.
+Marca las tres para los entornos **Production**, **Preview** y **Development**.
 Luego **Deploy**.
+
+`VITE_APP_URL` es el único lugar donde vive la dirección pública de la app: se
+usa en el texto de credenciales que se copia al crear un usuario o un registro
+demo. Sin ella, ese texto apunta al origen desde el que se abrió la app.
 
 ## 4. Registrar la URL de Vercel en Supabase
 
-Cuando Vercel te dé la URL final (ej. `https://lpms.vercel.app`):
+Cuando Vercel te dé la URL final (ej. `https://sfs.vercel.app`):
 
 - Supabase → **Authentication → URL Configuration** → agrega esa URL en
   **Site URL** y en **Redirect URLs**.

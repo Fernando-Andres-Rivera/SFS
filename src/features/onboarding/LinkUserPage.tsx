@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../../hooks/useAuth'
+import { APP_URL } from '../../lib/appUrl'
 import {
   inviteUser,
   fetchOrganizationsList,
@@ -182,10 +183,10 @@ export function LinkUserPage() {
   async function copyCredentials() {
     if (!createdUser) return
     const text =
-      `Acceso a LPMS\n` +
+      `Acceso a SFS\n` +
       `Correo: ${createdUser.email}\n` +
       `Contraseña temporal: ${createdUser.tempPassword}\n` +
-      `Entra en https://lpms-rouge.vercel.app y cámbiala en "Seguridad de la cuenta".`
+      `Entra en ${APP_URL} y cámbiala en "Seguridad de la cuenta".`
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)

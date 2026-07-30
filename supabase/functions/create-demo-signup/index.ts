@@ -26,7 +26,7 @@ function generateTempPassword(): string {
   const bytes = new Uint8Array(8)
   crypto.getRandomValues(bytes)
   const body = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
-  return `Lpms-${body}`
+  return `Sfs-${body}`
 }
 
 function json(body: unknown, status = 200): Response {

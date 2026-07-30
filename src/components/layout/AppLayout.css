@@ -147,10 +147,10 @@
   box-shadow: 0 0 10px rgba(38, 166, 154, 0.7);
   transform: translateY(-50%) scaleY(0);
   transform-origin: center;
-  animation: lpms-accent-grow var(--dur) var(--ease-out) forwards;
+  animation: sfs-accent-grow var(--dur) var(--ease-out) forwards;
 }
 
-@keyframes lpms-accent-grow {
+@keyframes sfs-accent-grow {
   to {
     transform: translateY(-50%) scaleY(1);
   }

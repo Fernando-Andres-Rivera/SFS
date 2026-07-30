@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Organization, Profile } from '../lib/types'
 import { AuthContext } from './auth-context'
 
-const SELECTED_ORG_STORAGE_KEY = 'lpms_selected_org'
+const SELECTED_ORG_STORAGE_KEY = 'sfs_selected_org'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)

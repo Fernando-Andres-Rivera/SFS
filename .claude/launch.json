@@ -2,8 +2,8 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "lpms-dev",
-      "runtimeExecutable": "C:\\Users\\ferna\\Documents\\Fernando Rivera\\LEANPROLOGISTIC SAS\\Proyectos Claude Code\\Proyecto Lean Performance Management System\\dev-with-path.cmd",
+      "name": "sfs-dev",
+      "runtimeExecutable": "C:\\Users\\ferna\\Documents\\Fernando Rivera\\LEANPROLOGISTIC SAS\\Proyectos Claude Code\\Systematic Form of Service\\dev-with-path.cmd",
       "runtimeArgs": [],
       "port": 5173,
       "autoPort": true

@@ -107,15 +107,15 @@ export function LoginPage() {
     mode === 'login'
       ? 'Ingresa tus credenciales para continuar.'
       : mode === 'register'
-        ? 'Regístrate y prueba LPMS en tu propio entorno Demo, sin costo.'
+        ? 'Regístrate y prueba SFS en tu propio entorno Demo, sin costo.'
         : 'Te enviaremos un enlace a tu correo para poner una nueva contraseña.'
 
   return (
     <div className="login-page">
       <div className="login-hero">
         <img
-          src="/cascada-niveles-lpms-v2.png"
-          alt="La cascada diaria de reuniones por niveles en LPMS: tres plataformas industriales con anillos de luz, equipos revisando indicadores en pantallas digitales, del nivel operativo a la dirección."
+          src="/cascada-niveles-sfs-v2.png"
+          alt="La cascada diaria de reuniones por niveles en SFS: tres plataformas industriales con anillos de luz, equipos revisando indicadores en pantallas digitales, del nivel operativo a la dirección."
           className="login-hero__image"
         />
         <div className="login-hero__scrim" aria-hidden="true" />
@@ -148,8 +148,8 @@ export function LoginPage() {
         </div>
 
         <div className="login-product-central">
-          <span className="login-product-central__name">LPMS</span>
-          <span className="login-product-central__tagline">Lean Performance Management System</span>
+          <span className="login-product-central__name">SFS</span>
+          <span className="login-product-central__tagline">Systematic Form of Service</span>
         </div>
 
         <form className="login-card" onSubmit={handleSubmit}>

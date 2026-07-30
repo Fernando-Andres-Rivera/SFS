@@ -1,5 +1,5 @@
 -- ============================================================
--- LPMS — Datos semilla de demostración
+-- SFS — Datos semilla de demostración
 -- 1 organización, 1 sitio, 7 ejes, indicadores en cascada
 -- (Nivel 1 -> Nivel 2 -> Nivel 3) para el eje Seguridad,
 -- más un indicador de ejemplo en cada uno de los otros ejes.

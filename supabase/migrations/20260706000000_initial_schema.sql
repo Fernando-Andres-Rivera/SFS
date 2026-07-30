@@ -1,5 +1,5 @@
 -- ============================================================
--- LPMS — Fase 1: Esquema de datos
+-- SFS — Fase 1: Esquema de datos
 -- ============================================================
 
 create extension if not exists "pgcrypto";

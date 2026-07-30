@@ -1,6 +1,6 @@
 {
-  "name": "LPMS — Lean Performance Management System",
-  "short_name": "LPMS",
+  "name": "SFS — Systematic Form of Service",
+  "short_name": "SFS",
   "description": "Sistema de gestión de desempeño Lean — LeanProLogistic",
   "start_url": "/",
   "display": "standalone",

@@ -191,7 +191,7 @@ h1 {
    Movimiento base: entrada suave de pantallas y utilidades de
    revelado escalonado. Todo se apaga con prefers-reduced-motion.
    ============================================================ */
-@keyframes lpms-fade-up {
+@keyframes sfs-fade-up {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -202,7 +202,7 @@ h1 {
   }
 }
 
-@keyframes lpms-fade-in {
+@keyframes sfs-fade-in {
   from {
     opacity: 0;
   }
@@ -213,7 +213,7 @@ h1 {
 
 /* Pop de entrada para el resultado principal de una tarjeta de KPI — el
    dato que más pesa en una decisión se separa del resto apenas se pinta. */
-@keyframes lpms-pop {
+@keyframes sfs-pop {
   from {
     opacity: 0;
     transform: scale(0.9);
@@ -226,7 +226,7 @@ h1 {
 
 /* Crecimiento de una barra de progreso desde 0 al montar — scaleX no
    necesita saber el ancho final en %, así que sirve para cualquier valor. */
-@keyframes lpms-grow {
+@keyframes sfs-grow {
   from {
     transform: scaleX(0);
   }
@@ -237,12 +237,12 @@ h1 {
 
 /* Cada pantalla entra con un desvanecido ascendente sutil. */
 .app-content > * {
-  animation: lpms-fade-up var(--dur-slow) var(--ease-out) both;
+  animation: sfs-fade-up var(--dur-slow) var(--ease-out) both;
 }
 
 .reveal {
   opacity: 0;
-  animation: lpms-fade-up var(--dur-slow) var(--ease-out) forwards;
+  animation: sfs-fade-up var(--dur-slow) var(--ease-out) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

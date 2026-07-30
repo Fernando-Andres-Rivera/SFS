@@ -1,7 +1,7 @@
 import './improvement-cycle.css'
 
 /**
- * Firma visual de LPMS: el ciclo de mejora continua PDCA
+ * Firma visual de SFS: el ciclo de mejora continua PDCA
  * (Planear · Hacer · Verificar · Actuar) girando lentamente, con una
  * tendencia ascendente al centro — la esencia del negocio, no un adorno.
  * Pensada para ir sobre el azul del hero. Se detiene con prefers-reduced-motion.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { PageHeader } from '../../components/ui/PageHeader'
+import { APP_URL } from '../../lib/appUrl'
 import {
   fetchDemoSignups,
   deleteDemoSignup,
@@ -66,10 +67,10 @@ export function DemoSignupsReportPage() {
   async function copyCredentials() {
     if (!createdResult) return
     const text =
-      `Acceso Demo a LPMS\n` +
+      `Acceso Demo a SFS\n` +
       `Correo: ${createdResult.email}\n` +
       `Contraseña temporal: ${createdResult.tempPassword}\n` +
-      `Entra en https://lpms-rouge.vercel.app y cámbiala en "Seguridad de la cuenta".`
+      `Entra en ${APP_URL} y cámbiala en "Seguridad de la cuenta".`
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)

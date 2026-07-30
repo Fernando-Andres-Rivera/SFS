@@ -48,7 +48,7 @@ export function AppLayout() {
             <span className="app-sidebar__brand-bar" />
             <span className="app-sidebar__brand-bar" />
           </span>
-          <span className="app-sidebar__brand-text">LPMS</span>
+          <span className="app-sidebar__brand-text">SFS</span>
         </div>
         <nav className="app-sidebar__nav">
           <span className="app-sidebar__section">Mi cuenta</span>
