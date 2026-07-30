@@ -29,6 +29,10 @@ Supabase propios. Ver [Estado actual](#estado-actual).
 
 El procedimiento de ambos pasos está en [DEPLOYMENT.md](DEPLOYMENT.md).
 
+Para vender e implantar SFS en clientes —topología por cliente, aprovisionamiento,
+traspaso de la gestión, formación y empaquetado comercial— ver
+[docs/PLAYBOOK-CLIENTES.md](docs/PLAYBOOK-CLIENTES.md).
+
 ## Roles
 
 Cinco roles, con visibilidad y permisos crecientes:
