@@ -70,10 +70,39 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
    (Unidades y taxonomía de causas ya vivían en migraciones, no en el seed —
    no requirieron cambio.)
 
-3. **Aprovisionamiento por CLI, no por SQL Editor.** Correr 53 archivos a mano
-   en el panel es aceptable una vez; en cada cliente es una fuente garantizada de
-   errores. Adoptar Supabase CLI: `supabase link` + `supabase db push`, con las
-   Edge Functions desplegadas por comando.
+3. ~~**Aprovisionamiento por CLI, no por SQL Editor.**~~ **Resuelto.** Supabase
+   CLI se adoptó como dependencia de desarrollo. Flujo probado de punta a punta
+   en la primera instancia nueva: `supabase login` → `supabase link
+   --project-ref <ref>` → `supabase db push`.
+
+   Aplicar las 53 migraciones desde cero, sobre un proyecto nunca antes
+   tocado, sacó a la luz **4 bugs de las propias migraciones** que el SQL
+   Editor había estado ocultando (porque ahí el operador corrige a mano sin
+   dejar rastro). Ya corregidos en el historial:
+
+   - **3 funciones "huérfanas"** (`fn_action_plan_reabrir`,
+     `gemba_user_has_location_site`, `fn_gemba_generar_plan`): tres
+     migraciones (`20260718044354`, `20260718050105`, `20260718050212`)
+     hacían `ALTER`/`REVOKE`/`GRANT` sobre funciones que ninguna migración
+     crea — existían solo en la base de LPMS, creadas a mano alguna vez y
+     nunca capturadas en el historial. El frontend no las invoca (verificado
+     por búsqueda en `src/`). Se envolvió cada sentencia en un `DO $$ ... $$`
+     que comprueba `to_regprocedure(...)` antes de actuar, así que ahora son
+     inocuas tanto en una base nueva como en una que sí las tenga.
+   - **1 política duplicada sin `DROP` previo**: `20260728000000` recreaba
+     `organizations_delete`, ya creada en `20260720000000`, sin el `DROP
+     POLICY` que sí tienen las otras 6 tablas de ese mismo archivo — una
+     inconsistencia dentro del propio archivo. Se agregó el `DROP POLICY IF
+     EXISTS` que faltaba.
+
+   **Lo importante**: esto no era un problema de LPMS — ahí nunca se manifestó
+   porque su base ya tenía esas funciones y esa política de una carga anterior.
+   Era un problema **latente en el código versionado**, invisible mientras solo
+   existiera una base de datos ya viva. Aparece exactamente al primer intento
+   de aprovisionar un cliente nuevo desde cero — que es lo que se acaba de
+   hacer. Se verificó con un barrido completo de las 53 migraciones (funciones,
+   políticas, tipos y tablas creadas más de una vez) que no queda ningún otro
+   caso del mismo patrón.
 
 ### Antes del segundo o tercer cliente
 

@@ -4,10 +4,12 @@
 -- inmutables) ni measurements (se corrigen vía autorización, no se borran).
 
 -- ============================================================
--- organizations: no existía NINGUNA política de borrado — el botón
--- "Eliminar organización" en la UI (ya restringido a admin_consultora)
--- no hacía nada realmente.
+-- organizations: la migración 20260720000000_admin_consultora_hard_delete
+-- ya había creado esta política con la misma condición — se recrea aquí
+-- (drop + create, como el resto de este archivo) solo para dejar
+-- constancia explícita junto al resto del uniformado; no cambia nada.
 -- ============================================================
+drop policy if exists organizations_delete on public.organizations;
 create policy organizations_delete on public.organizations
 for delete using (current_role_name() = 'admin_consultora');
 
