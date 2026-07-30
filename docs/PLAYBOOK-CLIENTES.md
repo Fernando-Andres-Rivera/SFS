@@ -84,16 +84,20 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
    precisamente para evitar esto, pero una migración posterior,
    `20260808000000_public_signup_demo_provisioning.sql` (que solo pretendía
    agregar la columna `is_demo`), redefinió la función completa
-   (`CREATE OR REPLACE`) y **perdió ese chequeo sin querer**. Como el orden
-   cronológico deja esa versión como la vigente, **este bug lleva viviendo
-   en la base de LPMS desde esa migración** — cualquier invitación real
-   (`invite-user`) dispara la misma colisión ahí también, no es exclusivo
-   de una instalación nueva.
+   (`CREATE OR REPLACE`) y **perdió ese chequeo sin querer** — al menos en
+   el historial versionado de este repositorio.
 
-   Corregido en `20260812000001_restore_skip_demo_org_check.sql`, que
-   restaura el chequeo conservando el resto del cuerpo de la función.
-   **Pendiente**: aplicar esta misma migración a la base de LPMS para
-   arreglar `invite-user` ahí también — no es solo deuda de SFS.
+   **Verificado en la base viva de LPMS antes de tocar nada**: su
+   `handle_new_user()` actual **ya tiene el chequeo** — idéntico al que
+   restaura `20260812000001`. El bug nunca estuvo en producción; alguien lo
+   corrigió ahí directamente (SQL Editor, sin dejarlo como migración), el
+   mismo patrón de *drift* que ya se había visto en las 3 funciones huérfanas
+   y la política duplicada. Conclusión corregida: **el historial de
+   migraciones de este repo no coincide con lo que realmente corre en
+   LPMS** — no aplicar `20260812000001` allá, ya está de más. Sí queda
+   pendiente, para quien administre LPMS, capturar como migración cualquier
+   corrección que se sepa hecha a mano en el panel — si algún día se
+   reconstruye esa base desde estos archivos, el bug reaparecería.
 
 3. ~~**Sitekey de Cloudflare Turnstile hardcodeada (la de LPMS).**~~
    **Resuelto.** El login/registro/recuperación exige un token de Turnstile
