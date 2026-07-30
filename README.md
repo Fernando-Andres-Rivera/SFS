@@ -20,7 +20,7 @@ Supabase propios. Ver [Estado actual](#estado-actual).
 
 ## Estado actual
 
-- ✅ Código completo: ~20 módulos funcionales, 63 migraciones, 3 Edge Functions.
+- ✅ Código completo: ~20 módulos funcionales, 53 migraciones, 3 Edge Functions.
 - ⏳ **GitHub**: sin remoto configurado. Va a un repositorio propio, distinto al
   de LPMS.
 - ⏳ **Supabase**: el `.env` local todavía apunta al proyecto de LPMS, así que
@@ -107,13 +107,13 @@ Las consultas de tableros van por lote (sin N+1) y se apoyan en la vista
 
 ### 1. Base de datos
 
-En el **SQL Editor** de Supabase, corre en orden cronológico todo
+En el **SQL Editor** de Supabase, corre en orden de nombre de archivo todo
 `supabase/migrations/*.sql` y luego `supabase/seed.sql`.
 
-> ⚠️ Seis pares de migraciones comparten el mismo timestamp (`20260722000000`,
-> `20260725000000`, `20260726000000`, `20260727000000`, `20260729000000`,
-> `20260730000000`). Al montar un entorno desde cero, aplícalas en orden
-> alfabético completo del nombre de archivo.
+Los timestamps son únicos, así que ordenar por nombre da un orden de aplicación
+inequívoco. No los renumeres ni los reordenes: hay dependencias entre migraciones
+(por ejemplo, `quick_win_level_escalation` modifica lo que crea
+`quick_win_boards`).
 
 ### 2. Variables de entorno
 

@@ -53,12 +53,11 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
 
 ### Bloqueantes antes del primer cliente
 
-1. **Timestamps duplicados en migraciones.** Seis pares comparten prefijo
-   (`20260722000000`, `20260725000000`, `20260726000000`, `20260727000000`,
-   `20260729000000`, `20260730000000`). Hoy el orden depende del sufijo
-   alfabético. Montar una base desde cero es un procedimiento manual y frágil, y
-   se repetirá en cada cliente. **Hay que renumerarlos** para que el orden sea
-   inequívoco.
+1. ~~**Timestamps duplicados en migraciones.**~~ **Resuelto.** Los seis pares que
+   compartían prefijo se renumeraron conservando el orden de aplicación previo.
+   Hoy los 53 timestamps son únicos y ordenar por nombre de archivo da un orden
+   inequívoco. **Regla a futuro**: una migración, un timestamp — si dos se crean
+   el mismo día, se diferencian en el sufijo, nunca se repiten.
 
 2. **Separar catálogo de datos de demostración.** `supabase/seed.sql` mezcla el
    catálogo que todo cliente necesita (los 7 ejes) con datos ficticios
@@ -67,7 +66,7 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
    - `seed_catalogo.sql` — ejes, unidades, taxonomía de causas. **Siempre.**
    - `seed_demo.sql` — organización y datos de ejemplo. **Solo en demos.**
 
-3. **Aprovisionamiento por CLI, no por SQL Editor.** Correr 63 archivos a mano
+3. **Aprovisionamiento por CLI, no por SQL Editor.** Correr 53 archivos a mano
    en el panel es aceptable una vez; en cada cliente es una fuente garantizada de
    errores. Adoptar Supabase CLI: `supabase link` + `supabase db push`, con las
    Edge Functions desplegadas por comando.
