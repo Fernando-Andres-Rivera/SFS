@@ -18,7 +18,7 @@ El repositorio ya está inicializado localmente. Falta conectarlo a un remoto
 ```bash
 # Crea un repositorio vacío en github.com/<tu-cuenta>/sfs (privado)
 git remote add origin https://github.com/<tu-cuenta>/sfs.git
-git push -u origin master
+git push -u origin main
 ```
 
 > El `.env` con la llave de Supabase **no** se sube — está en `.gitignore`. Las
