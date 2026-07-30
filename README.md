@@ -20,7 +20,7 @@ Supabase propios. Ver [Estado actual](#estado-actual).
 
 ## Estado actual
 
-- ✅ Código completo: ~20 módulos funcionales, 53 migraciones, 3 Edge Functions.
+- ✅ Código completo: ~20 módulos funcionales, 55 migraciones, 3 Edge Functions.
 - ⏳ **GitHub**: sin remoto configurado. Va a un repositorio propio, distinto al
   de LPMS.
 - ⏳ **Supabase**: el `.env` local todavía apunta al proyecto de LPMS, así que
@@ -127,6 +127,13 @@ Copia `.env.example` a `.env` y completa `VITE_SUPABASE_URL` y
 `VITE_SUPABASE_ANON_KEY` (Project Settings → API). `VITE_APP_URL` es opcional:
 es la dirección pública que se incluye en el texto de credenciales al crear un
 usuario; si se omite, se usa el origen desde el que se abre la app.
+
+`VITE_TURNSTILE_SITE_KEY` **no es opcional**: sin ella, el botón de
+login/registro/recuperación queda deshabilitado (exige un token de Cloudflare
+Turnstile antes de habilitarse). Necesitas tu propio widget de Turnstile,
+registrado contra tu dominio — ver DEPLOYMENT.md §3.1. Para desarrollo local,
+Cloudflare publica sitekeys de prueba que pasan siempre en cualquier dominio
+(nunca en producción).
 
 ### 3. Usuarios
 

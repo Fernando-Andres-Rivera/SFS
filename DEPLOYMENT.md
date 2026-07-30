@@ -6,7 +6,7 @@ y se sirven desde Vercel. Toda la seguridad vive en las políticas RLS de Supaba
 
 > **Estado.** SFS nace como réplica de LPMS, pero su infraestructura es
 > **independiente**: repositorio de GitHub propio ✅, proyecto de Supabase
-> propio ✅ (53 migraciones aplicadas, sin datos), 3 Edge Functions
+> propio ✅ (55 migraciones aplicadas), 3 Edge Functions
 > desplegadas ✅. Pendiente: **Cloudflare Turnstile propio** — ver la sección
 > correspondiente más abajo; sin eso, nadie puede iniciar sesión.
 

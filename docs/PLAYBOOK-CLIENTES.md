@@ -53,7 +53,49 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
 
 ### Bloqueantes antes del primer cliente
 
-0. ~~**Sitekey de Cloudflare Turnstile hardcodeada (la de LPMS).**~~
+1. ~~**El primer `admin_consultora` no se puede crear en ninguna base nueva.**~~
+   **Resuelto.** El trigger `prevent_admin_consultora_self_grant`
+   (migración `20260714000000`) bloquea cualquier insert/update con
+   `role = 'admin_consultora'` a menos que quien ejecuta ya tenga ese rol —
+   pero esa comprobación depende de `auth.uid()`, que es `null` fuera de una
+   sesión autenticada. Tanto el SQL Editor del panel como el Management API
+   (`supabase db query --linked`, usado para aprovisionar) ejecutan sin esa
+   sesión, así que el procedimiento que el propio README documentaba para
+   crear el primer usuario **estaba roto** para cualquier base nueva desde
+   esa migración — nunca se notó porque el primer `admin_consultora` de
+   LPMS ya existía antes de que el trigger se agregara. Corregido en
+   `20260812000000_fix_admin_consultora_bootstrap.sql`: se permite la única
+   excepción legítima (crear el primero, cuando no existe *ningún*
+   `admin_consultora` todavía); en cuanto existe uno, la protección original
+   opera sin cambios.
+
+2. ~~**`invite-user` colisiona con el trigger de auto-registro (bug en
+   producción, no solo de aprovisionamiento).**~~ **Resuelto.** Al crear el
+   primer usuario de la instancia nueva con el mismo patrón que usa
+   `invite-user` (`admin.createUser()` + `user_metadata.skip_demo_org =
+   true`, perfil insertado después), la creación chocó con
+   `duplicate key value violates unique constraint "profiles_pkey"`: el
+   trigger `on_auth_user_created` ya había creado una organización
+   "Demo — {nombre}" y un perfil `admin_cliente` para ese mismo id antes de
+   que el insert propio de `invite-user` llegara a correr.
+
+   La causa: `20260730000001_skip_demo_org_on_invited_users.sql` había
+   agregado el chequeo de `skip_demo_org` a `handle_new_user()`
+   precisamente para evitar esto, pero una migración posterior,
+   `20260808000000_public_signup_demo_provisioning.sql` (que solo pretendía
+   agregar la columna `is_demo`), redefinió la función completa
+   (`CREATE OR REPLACE`) y **perdió ese chequeo sin querer**. Como el orden
+   cronológico deja esa versión como la vigente, **este bug lleva viviendo
+   en la base de LPMS desde esa migración** — cualquier invitación real
+   (`invite-user`) dispara la misma colisión ahí también, no es exclusivo
+   de una instalación nueva.
+
+   Corregido en `20260812000001_restore_skip_demo_org_check.sql`, que
+   restaura el chequeo conservando el resto del cuerpo de la función.
+   **Pendiente**: aplicar esta misma migración a la base de LPMS para
+   arreglar `invite-user` ahí también — no es solo deuda de SFS.
+
+3. ~~**Sitekey de Cloudflare Turnstile hardcodeada (la de LPMS).**~~
    **Resuelto.** El login/registro/recuperación exige un token de Turnstile
    antes de habilitar el botón de envío; la sitekey estaba fija en
    `Turnstile.tsx` y atada al dominio de LPMS — en cualquier otro dominio,
@@ -66,13 +108,13 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
    instancia nueva — es exactamente el tipo de dependencia oculta que
    "compartir infraestructura con LPMS" iba a seguir escondiendo.
 
-1. ~~**Timestamps duplicados en migraciones.**~~ **Resuelto.** Los seis pares que
+4. ~~**Timestamps duplicados en migraciones.**~~ **Resuelto.** Los seis pares que
    compartían prefijo se renumeraron conservando el orden de aplicación previo.
    Hoy los 53 timestamps son únicos y ordenar por nombre de archivo da un orden
    inequívoco. **Regla a futuro**: una migración, un timestamp — si dos se crean
    el mismo día, se diferencian en el sufijo, nunca se repiten.
 
-2. ~~**Separar catálogo de datos de demostración.**~~ **Resuelto.** `seed.sql`
+5. ~~**Separar catálogo de datos de demostración.**~~ **Resuelto.** `seed.sql`
    mezclaba el catálogo que todo cliente necesita (los 7 ejes) con datos
    ficticios (organización demo, sitio Planta Bogotá, indicadores de ejemplo).
    Se dividió en:
@@ -83,7 +125,7 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
    (Unidades y taxonomía de causas ya vivían en migraciones, no en el seed —
    no requirieron cambio.)
 
-3. ~~**Aprovisionamiento por CLI, no por SQL Editor.**~~ **Resuelto.** Supabase
+6. ~~**Aprovisionamiento por CLI, no por SQL Editor.**~~ **Resuelto.** Supabase
    CLI se adoptó como dependencia de desarrollo. Flujo probado de punta a punta
    en la primera instancia nueva: `supabase login` → `supabase link
    --project-ref <ref>` → `supabase db push`.
@@ -119,20 +161,20 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
 
 ### Antes del segundo o tercer cliente
 
-4. **Versionado por tags.** Cada cliente corre una versión, no "lo último que
+7. **Versionado por tags.** Cada cliente corre una versión, no "lo último que
    haya en `main`". Sin esto, un push rompe cinco clientes a la vez.
 
-5. **Suite de pruebas de regresión.** Hoy no hay pruebas automatizadas. Con una
+8. **Suite de pruebas de regresión.** Hoy no hay pruebas automatizadas. Con una
    instancia el riesgo lo absorbe el usuario; con cinco, un fallo en RLS o en la
    captura se multiplica. Prioridad: aislamiento entre organizaciones, permisos
    por rol, y el upsert de mediciones.
 
-6. **Respaldo y restauración documentados.** Qué se respalda, cada cuánto, y el
+9. **Respaldo y restauración documentados.** Qué se respalda, cada cuánto, y el
    procedimiento probado de restauración. Es la primera pregunta de cualquier
    área de TI del lado del cliente.
 
-7. **Monitoreo.** Saber que la instancia de un cliente está caída antes de que
-   te llame.
+10. **Monitoreo.** Saber que la instancia de un cliente está caída antes de que
+    te llame.
 
 ### Deuda menor conocida
 
@@ -158,9 +200,12 @@ Checklist por cliente. No se salta ningún paso.
 
 - [ ] `supabase login` (una vez por máquina) → `supabase link --project-ref <ref>`
       → `supabase db push`. Probado de punta a punta en la primera instancia:
-      las 53 migraciones aplican limpio sobre un proyecto nuevo.
-- [ ] Aplicar `seed_catalogo.sql` (los 7 ejes — sin esto la app no tiene
-      tableros). `seed_demo.sql` **solo** si es un entorno de demostración.
+      las migraciones aplican limpio sobre un proyecto nuevo.
+- [ ] `supabase db push` **no** aplica seeds contra un proyecto remoto (eso
+      solo ocurre en `db reset`, que es local). Cargar cada seed con
+      `supabase db query --linked --file supabase/seed_catalogo.sql` (los 7
+      ejes — sin esto la app no tiene tableros) y, **solo** si es un entorno
+      de demostración, igual con `seed_demo.sql`.
 - [ ] Verificar que RLS está activo en todas las tablas (`get_advisors` de
       seguridad, o revisar en el panel).
 
@@ -191,8 +236,16 @@ Checklist por cliente. No se salta ningún paso.
 
 ### 3.5 Puesta a punto funcional
 
+- [ ] Crear el primer usuario `admin_consultora` (bootstrap; ya no es
+      LeanProLogistic el único con este rol en la instancia): en Supabase →
+      Authentication → Users → crear el usuario, y su fila en `profiles` vía
+      `supabase db query --linked` con `role = 'admin_consultora'`. Requiere
+      la migración `20260812000000` (ya en el historial) — sin ella, el
+      trigger de anti-escalación bloquea incluso este primer insert.
 - [ ] Crear la organización del cliente y sus sitios.
-- [ ] Crear el primer usuario `admin_cliente` y enrolar su MFA.
+- [ ] Crear el primer usuario `admin_cliente` (desde la propia app, vía
+      "Usuarios" → invitar, con el `admin_consultora` recién creado) y
+      enrolar su MFA.
 - [ ] Cargar estructura organizacional y responsables por pilar.
 - [ ] Configurar horarios de reunión y fechas de corte de captura por nivel.
 - [ ] Cargar el árbol de indicadores en cascada (Nivel 1 → 2 → 3) con sus metas.
