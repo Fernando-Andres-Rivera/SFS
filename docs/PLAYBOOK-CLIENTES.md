@@ -53,6 +53,19 @@ varios clientes dejan de funcionar. Ordenadas por urgencia.
 
 ### Bloqueantes antes del primer cliente
 
+0. ~~**Sitekey de Cloudflare Turnstile hardcodeada (la de LPMS).**~~
+   **Resuelto.** El login/registro/recuperación exige un token de Turnstile
+   antes de habilitar el botón de envío; la sitekey estaba fija en
+   `Turnstile.tsx` y atada al dominio de LPMS — en cualquier otro dominio,
+   Cloudflare la rechaza (error 110200) y **nadie puede entrar a la app**. Se
+   sacó a variable de entorno (`VITE_TURNSTILE_SITE_KEY`). Cada instancia
+   sigue necesitando su **propio widget de Cloudflare**, registrado contra su
+   propio dominio — eso no lo resuelve el código, es un paso manual por
+   cliente (detallado en DEPLOYMENT.md §3.1 y en el checklist §3.4 de este
+   documento). Descubierto al verificar el login end-to-end de la primera
+   instancia nueva — es exactamente el tipo de dependencia oculta que
+   "compartir infraestructura con LPMS" iba a seguir escondiendo.
+
 1. ~~**Timestamps duplicados en migraciones.**~~ **Resuelto.** Los seis pares que
    compartían prefijo se renumeraron conservando el orden de aplicación previo.
    Hoy los 53 timestamps son únicos y ordenar por nombre de archivo da un orden
@@ -143,24 +156,38 @@ Checklist por cliente. No se salta ningún paso.
 
 ### 3.2 Base de datos
 
-- [ ] Aplicar migraciones en orden (`supabase db push`).
-- [ ] Aplicar `seed_catalogo.sql`.
-- [ ] Verificar que RLS está activo en todas las tablas.
+- [ ] `supabase login` (una vez por máquina) → `supabase link --project-ref <ref>`
+      → `supabase db push`. Probado de punta a punta en la primera instancia:
+      las 53 migraciones aplican limpio sobre un proyecto nuevo.
+- [ ] Aplicar `seed_catalogo.sql` (los 7 ejes — sin esto la app no tiene
+      tableros). `seed_demo.sql` **solo** si es un entorno de demostración.
+- [ ] Verificar que RLS está activo en todas las tablas (`get_advisors` de
+      seguridad, o revisar en el panel).
 
 ### 3.3 Edge Functions
 
-- [ ] Desplegar `invite-user`, `create-demo-signup`, `delete-demo-signup`.
-- [ ] Configurar los secretos del proyecto (service role key).
+- [ ] Desplegar con `supabase functions deploy <nombre>` — una por una o las
+      3 en secuencia (`invite-user`, `create-demo-signup`,
+      `delete-demo-signup`). No requieren configurar secretos: `SUPABASE_URL`,
+      `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_ANON_KEY` los inyecta Supabase
+      automáticamente en cada función.
+- [ ] Confirmar las 3 con `supabase functions list` — status `ACTIVE`.
 
 ### 3.4 Frontend
 
 - [ ] Crear proyecto en Vercel apuntando al repositorio, en el tag de la versión
       contratada.
-- [ ] Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_APP_URL`.
+- [ ] Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_APP_URL`,
+      `VITE_TURNSTILE_SITE_KEY`.
 - [ ] Dominio: `<cliente>.sfs.<dominio-leanprologistic>` o el dominio propio del
       cliente si lo aporta.
 - [ ] Registrar la URL en Supabase → Authentication → URL Configuration
       (Site URL y Redirect URLs).
+- [ ] **Cloudflare Turnstile propio para este dominio** (ver DEPLOYMENT.md
+      §3.1): crear el widget, poner la sitekey en `VITE_TURNSTILE_SITE_KEY` y
+      la secret key en Supabase → Authentication → Attack Protection. **Sin
+      esto el botón de login queda deshabilitado — es bloqueante, no
+      opcional.**
 
 ### 3.5 Puesta a punto funcional
 

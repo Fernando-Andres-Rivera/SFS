@@ -20,8 +20,11 @@ declare global {
 
 // Site key — es pública por diseño (va embebida en cualquier página que use
 // Turnstile), la que protege de verdad es la Secret Key, que solo vive en la
-// configuración de Supabase Auth y nunca en el código del cliente.
-const TURNSTILE_SITE_KEY = '0x4AAAAAAD6DsvVXbY2JgHCk'
+// configuración de Supabase Auth y nunca en el código del cliente. Depende
+// del dominio: cada despliegue (cada instancia de cliente) necesita su
+// propia sitekey de Turnstile, registrada contra su propio dominio — de ahí
+// que venga por variable de entorno y no hardcodeada.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
 
 interface TurnstileProps {
   onToken: (token: string | null) => void

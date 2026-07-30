@@ -4,11 +4,11 @@ La aplicación es un frontend estático (Vite + React) que habla directamente co
 Supabase. No hay servidor propio que administrar: se compila a archivos estáticos
 y se sirven desde Vercel. Toda la seguridad vive en las políticas RLS de Supabase.
 
-> **Pendiente de configuración.** SFS nace como réplica de LPMS, pero su
-> infraestructura es **independiente**: repositorio de GitHub propio y proyecto
-> de Supabase propio. Mientras eso no se configure, el `.env` local sigue
-> apuntando al Supabase de LPMS y **ambas apps comparten base de datos**. Los
-> pasos de abajo son el orden en que hay que cortar esa dependencia.
+> **Estado.** SFS nace como réplica de LPMS, pero su infraestructura es
+> **independiente**: repositorio de GitHub propio ✅, proyecto de Supabase
+> propio ✅ (53 migraciones aplicadas, sin datos), 3 Edge Functions
+> desplegadas ✅. Pendiente: **Cloudflare Turnstile propio** — ver la sección
+> correspondiente más abajo; sin eso, nadie puede iniciar sesión.
 
 ## 1. Subir el código a GitHub
 
@@ -45,13 +45,43 @@ Supabase propio de SFS** (no las de LPMS):
 | `VITE_SUPABASE_URL` | `https://<proyecto-sfs>.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | tu `sb_publishable_...` (la llave *publishable*, segura de exponer) |
 | `VITE_APP_URL` | la URL pública de SFS (opcional; si se omite se usa el origen actual) |
+| `VITE_TURNSTILE_SITE_KEY` | sitekey del widget Turnstile de **esta** instancia — ver sección siguiente |
 
-Marca las tres para los entornos **Production**, **Preview** y **Development**.
+Marca las cuatro para los entornos **Production**, **Preview** y **Development**.
 Luego **Deploy**.
 
 `VITE_APP_URL` es el único lugar donde vive la dirección pública de la app: se
 usa en el texto de credenciales que se copia al crear un usuario o un registro
 demo. Sin ella, ese texto apunta al origen desde el que se abrió la app.
+
+## 3.1 Cloudflare Turnstile (obligatorio — sin esto no hay login)
+
+El formulario de login/registro/recuperación usa un widget anti-bots de
+Cloudflare Turnstile; el botón de enviar queda **deshabilitado** hasta que el
+widget entrega un token válido (`src/features/auth/LoginPage.tsx`, disabled
+mientras no haya `captchaToken`). La sitekey de Turnstile está **atada al
+dominio**: la de LPMS no sirve aquí y viceversa — cada instancia (cada dominio
+de Vercel) necesita su propio widget.
+
+Pasos, por instancia:
+
+1. En el [dashboard de Cloudflare](https://dash.cloudflare.com) → **Turnstile**
+   → **Add widget**. Dominio: el de esta instancia (ej. `sfs.vercel.app` o el
+   dominio del cliente). Modo: *Managed*.
+2. Cloudflare entrega dos valores:
+   - **Site key** (pública) → variable `VITE_TURNSTILE_SITE_KEY` en Vercel.
+   - **Secret key** → Supabase (proyecto de esta instancia) → **Authentication
+     → Attack Protection → Enable CAPTCHA protection → Turnstile**, pégala ahí.
+     Este paso es manual en el panel; ni el CLI ni las migraciones lo cubren.
+3. Sin el paso 2 (secret key en Supabase), la protección solo es cosmética:
+   el frontend exige un token, pero el servidor no lo valida. Con ambos
+   configurados, un intento de login sin token válido lo rechaza también
+   Supabase Auth, no solo la UI.
+
+**Para desarrollo local**, Cloudflare publica sitekeys de prueba que pasan
+siempre en cualquier dominio (documentadas en su
+[página de testing](https://developers.cloudflare.com/turnstile/troubleshooting/testing/)) —
+**nunca usarlas en producción**, porque no filtran nada.
 
 ## 4. Registrar la URL de Vercel en Supabase
 
