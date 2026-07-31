@@ -39,6 +39,10 @@ Para vender e implantar SFS en clientes —topología por cliente, aprovisionami
 traspaso de la gestión, formación y empaquetado comercial— ver
 [docs/PLAYBOOK-CLIENTES.md](docs/PLAYBOOK-CLIENTES.md).
 
+Antes de poner la app delante de un cliente, recorrer
+[docs/CHECKLIST-DEMO-CLIENTE.md](docs/CHECKLIST-DEMO-CLIENTE.md): verificación de
+GitHub, Cloudflare, Vercel y Supabase, más la prueba de humo.
+
 ## Roles
 
 Cinco roles, con visibilidad y permisos crecientes. La columna *Rol* es el
