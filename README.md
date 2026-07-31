@@ -21,13 +21,19 @@ Supabase propios. Ver [Estado actual](#estado-actual).
 ## Estado actual
 
 - ✅ Código completo: ~20 módulos funcionales, 55 migraciones, 3 Edge Functions.
-- ⏳ **GitHub**: sin remoto configurado. Va a un repositorio propio, distinto al
-  de LPMS.
-- ⏳ **Supabase**: el `.env` local todavía apunta al proyecto de LPMS, así que
-  **hoy ambas apps comparten la misma base de datos**. Falta crear el proyecto
-  de Supabase de SFS, correr las migraciones y cambiar el `.env`.
+- ✅ **GitHub**: repositorio propio (`SFS`), distinto al de LPMS.
+- ✅ **Supabase**: proyecto propio (`yjyvqvdyebbvftdniuax`, en una organización
+  de Supabase distinta a la de LPMS). Las 55 migraciones están aplicadas y las
+  3 Edge Functions desplegadas. **Las dos apps no comparten base de datos.**
+- ✅ **Cloudflare Turnstile**: widget propio, atado a los dominios de SFS.
+- ⚠️ **Vercel**: el proyecto `sfs` es propio, pero vive en la **misma cuenta de
+  Vercel que `lpms`** (equipo `lean-performance-management-system`). Es el
+  único punto que SFS todavía comparte con LPMS: facturación, miembros del
+  equipo y, sobre todo, los dominios por defecto llevan el nombre de LPMS
+  (`sfs-lean-performance-management-system.vercel.app`). Ver
+  [DEPLOYMENT.md](DEPLOYMENT.md) §2.
 
-El procedimiento de ambos pasos está en [DEPLOYMENT.md](DEPLOYMENT.md).
+El procedimiento de cada pieza está en [DEPLOYMENT.md](DEPLOYMENT.md).
 
 Para vender e implantar SFS en clientes —topología por cliente, aprovisionamiento,
 traspaso de la gestión, formación y empaquetado comercial— ver

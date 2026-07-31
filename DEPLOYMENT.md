@@ -6,34 +6,54 @@ y se sirven desde Vercel. Toda la seguridad vive en las políticas RLS de Supaba
 
 > **Estado.** SFS nace como réplica de LPMS, pero su infraestructura es
 > **independiente**: repositorio de GitHub propio ✅, proyecto de Supabase
-> propio ✅ (55 migraciones aplicadas), 3 Edge Functions
-> desplegadas ✅. Pendiente: **Cloudflare Turnstile propio** — ver la sección
-> correspondiente más abajo; sin eso, nadie puede iniciar sesión.
+> propio ✅ (55 migraciones aplicadas, verificadas contra la base), 3 Edge
+> Functions desplegadas ✅, proyecto de Vercel propio ✅, widget de
+> **Cloudflare Turnstile propio creado** ✅ (§3.1). Falta confirmar que sus dos
+> llaves estén colocadas — sitekey en Vercel, secret key en Supabase — con un
+> login real contra `sfs-lime.vercel.app`; hasta entonces el botón de ingresar
+> puede seguir deshabilitado.
+>
+> **Lo único que SFS todavía comparte con LPMS es la cuenta de Vercel** — ver
+> §2. No comparten base de datos, repositorio ni widget de Turnstile.
 
-## 1. Subir el código a GitHub
+## 1. Subir el código a GitHub — hecho ✅
 
-El repositorio ya está inicializado localmente. Falta conectarlo a un remoto
-**nuevo, distinto al de LPMS**:
+El repositorio vive en su propio remoto, distinto al de LPMS:
 
 ```bash
-# Crea un repositorio vacío en github.com/<tu-cuenta>/sfs (privado)
-git remote add origin https://github.com/<tu-cuenta>/sfs.git
-git push -u origin main
+git remote -v   # origin  https://github.com/Fernando-Andres-Rivera/SFS.git
 ```
 
 > El `.env` con la llave de Supabase **no** se sube — está en `.gitignore`. Las
 > variables de entorno se configuran directamente en Vercel (paso 3).
 
-## 2. Importar el proyecto en Vercel
+## 2. Importar el proyecto en Vercel — hecho ✅, con una salvedad
 
-1. En [vercel.com](https://vercel.com) → **Add New → Project → Import Git Repository**.
-2. Elige el repositorio `sfs`.
-3. Vercel detecta **Vite** automáticamente. No cambies nada:
-   - Framework Preset: `Vite`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-4. El archivo `vercel.json` ya incluido redirige todas las rutas a `index.html`
-   (necesario para que los enlaces profundos y el "recargar página" funcionen).
+El proyecto `sfs` ya existe en Vercel y despliega desde `main`. La
+configuración es la que Vercel detecta solo para Vite (Build Command
+`npm run build`, Output Directory `dist`), y `vercel.json` redirige todas las
+rutas a `index.html` para que los enlaces profundos y el "recargar página"
+funcionen.
+
+> ⚠️ **Salvedad — el único vínculo que queda con LPMS.** El proyecto `sfs` está
+> dentro del equipo de Vercel `lean-performance-management-system`, el mismo
+> que aloja `lpms`. Consecuencias: comparten facturación y miembros, y los
+> dominios por defecto de SFS llevan el nombre de LPMS
+> (`sfs-lean-performance-management-system.vercel.app`), que es lo que ve un
+> cliente si no se le asigna un dominio propio.
+>
+> Para separarlo hay tres caminos, de menor a mayor esfuerzo:
+>
+> 1. **Asignar a SFS un dominio propio** (`sfs.midominio.com` o un
+>    `.vercel.app` sin el slug del equipo). Oculta el nombre de LPMS de cara
+>    al cliente, pero la cuenta sigue siendo compartida. Recordar agregar el
+>    dominio nuevo al widget de Turnstile (§3.1) y a Supabase (§4).
+> 2. **Renombrar el equipo** a algo neutro (ej. `leanprologistic`). Arregla los
+>    dominios de ambos proyectos de una vez — **pero cambia también las URLs de
+>    LPMS**, que ya está en producción con clientes. No hacerlo sin avisar.
+> 3. **Crear un equipo de Vercel separado para SFS** y transferir el proyecto.
+>    Es la separación real (facturación y accesos aparte). Implica reconfigurar
+>    variables de entorno y volver a registrar dominios en Turnstile y Supabase.
 
 ## 3. Configurar las variables de entorno en Vercel
 
@@ -81,7 +101,29 @@ Pasos, por instancia:
 **Para desarrollo local**, Cloudflare publica sitekeys de prueba que pasan
 siempre en cualquier dominio (documentadas en su
 [página de testing](https://developers.cloudflare.com/turnstile/troubleshooting/testing/)) —
-**nunca usarlas en producción**, porque no filtran nada.
+**nunca usarlas en producción**, porque no filtran nada. El `.env` local de este
+repo usa una de ellas a propósito: la sitekey real de abajo está atada a los
+dominios de Vercel y rechazaría `localhost`.
+
+### El widget de esta instancia (SFS)
+
+Ya creado en Cloudflare, modo *Managed*:
+
+| | |
+|---|---|
+| Site key | `0x4AAAAAAEC6rCRsRZ-pWqeP` (pública) |
+| Secret key | solo en Supabase → Attack Protection; no vive en este repo |
+| Hostnames | `sfs-lime.vercel.app`, `sfs-lean-performance-management-system.vercel.app`, `sfs-git-main-lean-performance-management-system.vercel.app` |
+
+Los tres hostnames son los dominios estables del proyecto `sfs` en Vercel. Las
+URLs de *preview* (`sfs-<hash>-lean-performance-management-system.vercel.app`)
+cambian en cada despliegue y **no** están registradas: el login no funcionará en
+un preview salvo que se agregue ese hostname al widget o se le asigne un dominio
+fijo.
+
+Al cambiar `VITE_TURNSTILE_SITE_KEY` en Vercel hace falta **redesplegar**. Vite
+hornea las variables `VITE_*` durante el build; guardar la variable no altera un
+despliegue ya compilado.
 
 ## 4. Registrar la URL de Vercel en Supabase
 
