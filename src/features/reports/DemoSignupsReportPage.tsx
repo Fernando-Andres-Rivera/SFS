@@ -137,7 +137,7 @@ export function DemoSignupsReportPage() {
   return (
     <div className="capture-auth-page">
       <PageHeader
-        eyebrow="Consultora · Posibles clientes"
+        eyebrow="Gestión · Posibles clientes"
         title="Registros Demo"
         subtitle="Cada persona con su propio entorno Demo — autorregistrada desde la pantalla de inicio o creada aquí manualmente por el equipo — tu base de posibles clientes, con cuántos llegan por día."
       />

@@ -41,7 +41,9 @@ traspaso de la gestión, formación y empaquetado comercial— ver
 
 ## Roles
 
-Cinco roles, con visibilidad y permisos crecientes:
+Cinco roles, con visibilidad y permisos crecientes. La columna *Rol* es el
+valor del enum `user_role` en Postgres; entre paréntesis, la etiqueta que ve el
+usuario cuando difiere.
 
 | Rol | Alcance |
 |---|---|
@@ -49,7 +51,11 @@ Cinco roles, con visibilidad y permisos crecientes:
 | `administrativo` | Lo anterior + gestión de indicadores |
 | `gerente` | Toda su organización: gestión, estructura y configuración |
 | `admin_cliente` | Como gerente, más alta de usuarios |
-| `admin_consultora` | Todas las organizaciones; conmutador de tenant en la barra superior. Requiere MFA (AAL2) |
+| `admin_consultora` (*Admin Gestión*) | Todas las organizaciones; conmutador de tenant en la barra superior. Requiere MFA (AAL2) |
+
+El identificador `admin_consultora` no se renombra a propósito: es un valor de
+enum del que dependen las políticas RLS y varias funciones de la base. Lo que
+cambia es la etiqueta, centralizada en `USER_ROLE_LABEL` (`src/lib/types.ts`).
 
 ## Módulos
 
@@ -147,14 +153,62 @@ Los usuarios se crean desde la propia app (**Usuarios** → invitar), que llama 
 la Edge Function `invite-user`: crea la cuenta en Auth, su fila en `profiles` y
 sus sitios en `profile_sites`, y devuelve una contraseña temporal.
 
-Para el **primer** `admin_consultora` no hay quien invite todavía: créalo en
-**Authentication → Users** del panel de Supabase, copia su UUID y ejecuta:
+Para el **primer** `admin_consultora` (el rol que la interfaz llama *Admin
+Gestión*) no hay quien invite todavía, así que se crea a mano. **No basta con
+insertar la fila en `profiles`**: al crear el usuario desde el panel se dispara
+el trigger `handle_new_user`, que toma la rama de auto-registro público y crea
+por su cuenta una organización `Demo — {nombre}` y un perfil `admin_cliente`.
+Ese trigger solo se salta si el usuario trae `invited_at` o
+`skip_demo_org` en su metadata — cosas que pone `invite-user`, no el panel. Un
+`insert` a ciegas choca contra el perfil ya creado y falla con `duplicate key`.
+
+El procedimiento correcto:
+
+1. **Authentication → Users → Add user**: correo, contraseña y **Auto Confirm
+   User** marcado.
+2. Comprobar qué dejó el trigger:
+
+```sql
+select p.id, p.email, p.role, o.name as organizacion, o.is_demo
+from profiles p join organizations o on o.id = p.organization_id
+where p.email = 'TU-CORREO';
+```
+
+3. Promoverlo. Si el paso 2 devolvió una fila (lo normal):
+
+```sql
+update profiles
+set role = 'admin_consultora', full_name = 'Nombre Apellido',
+    organization_id = (select id from organizations where is_demo is not true
+                       order by created_at limit 1)
+where email = 'TU-CORREO';
+```
+
+   Si no devolvió nada, insertarlo con el UUID que muestra el panel:
 
 ```sql
 insert into profiles (id, organization_id, role, full_name, email)
-values ('<uuid>', '00000000-0000-0000-0000-000000000001', 'admin_consultora',
-        'Admin Consultora', 'admin.consultora@leanprologistic.com');
+values ('<uuid>',
+        (select id from organizations where is_demo is not true
+         order by created_at limit 1),
+        'admin_consultora', 'Nombre Apellido', 'TU-CORREO');
 ```
+
+   `organization_id` es `not null`, de ahí la subconsulta: tiene que existir ya
+   una organización (la del cliente, o la de `seed_demo.sql`).
+
+4. Borrar la organización que el trigger creó de más:
+
+```sql
+delete from organizations
+where is_demo = true and name like 'Demo — %'
+  and not exists (select 1 from profiles p where p.organization_id = organizations.id);
+```
+
+Esto funciona **solo para el primero**: el trigger
+`prevent_admin_consultora_self_grant` permite crear un `admin_consultora` por
+SQL únicamente mientras no exista ninguno. Después, los usuarios se crean desde
+la app.
 
 Ese rol exige MFA: al primer inicio de sesión, enrola el segundo factor desde
 **Seguridad de la cuenta**.

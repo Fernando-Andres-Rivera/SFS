@@ -17,10 +17,11 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import './onboarding.css'
 
 /** Un admin_cliente solo puede invitar dentro de su propia organización, y
- * nunca al rol admin_consultora (reservado al equipo de LeanProLogistic) —
- * la Edge Function revalida esto mismo del lado del servidor. */
+ * nunca al rol admin_consultora (el de gestión, con acceso a todas las
+ * organizaciones) — la Edge Function revalida esto mismo del lado del
+ * servidor. */
 const CONSULTORA_ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: 'admin_consultora', label: 'Admin Consultora (equipo LeanProLogistic)' },
+  { value: 'admin_consultora', label: 'Admin Gestión (acceso a todas las organizaciones)' },
   { value: 'admin_cliente', label: 'Admin Cliente' },
   { value: 'gerente', label: 'Gerente' },
   { value: 'administrativo', label: 'Administrativo' },

@@ -77,9 +77,9 @@ export function CaptureAuthorizationsReportPage() {
   return (
     <div className="capture-auth-page">
       <PageHeader
-        eyebrow="Consultora · Auditoría"
+        eyebrow="Gestión · Auditoría"
         title="Autorizaciones de captura tardía"
-        subtitle="Cada corrección que un administrador de LeanProLogistic autoriza sobre una fecha ya cerrada, en todos los clientes — quién la solicita más seguido, cuándo se concentran, y el detalle completo para auditoría."
+        subtitle="Cada corrección que un Admin Gestión autoriza sobre una fecha ya cerrada, en todas las organizaciones — quién la solicita más seguido, cuándo se concentran, y el detalle completo para auditoría."
       />
 
       <div className="period-row">

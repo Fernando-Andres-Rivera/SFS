@@ -290,7 +290,7 @@ export function MeasurementCapturePage() {
     if (dateClosed) {
       setMessage({
         type: 'error',
-        text: 'Esta fecha ya cerró (pasó la reunión que la evalúa) — solo LeanProLogistic puede autorizar una corrección.',
+        text: 'Esta fecha ya cerró (pasó la reunión que la evalúa) — solo un Admin Gestión puede autorizar una corrección.',
       })
       return
     }
@@ -391,10 +391,10 @@ export function MeasurementCapturePage() {
           {dateClosed && levelCutoff && (
             <p className="capture-cutoff-warning">
               Esta fecha ya pasó por la reunión de Nivel {selectedIndicator?.level} que la evalúa y quedó cerrada —
-              no se puede editar{isAdminConsultora ? '' : ' sin autorización de LeanProLogistic'}.
+              no se puede editar{isAdminConsultora ? '' : ' sin autorización de un Admin Gestión'}.
               {isAdminConsultora
                 ? ' Elige una causal abajo para autorizar la corrección.'
-                : ' Pide a LeanProLogistic que la autorice si necesitas corregirla.'}
+                : ' Pide a un Admin Gestión que la autorice si necesitas corregirla.'}
             </p>
           )}
 

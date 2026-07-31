@@ -9,8 +9,11 @@ export type UserRole =
   | 'administrativo'
   | 'operativo'
 
+// El identificador `admin_consultora` es el valor del enum `user_role` en
+// Postgres y lo usan políticas RLS y funciones de la base, así que no se
+// renombra; lo que ve el usuario es esta etiqueta.
 export const USER_ROLE_LABEL: Record<UserRole, string> = {
-  admin_consultora: 'Admin Consultora',
+  admin_consultora: 'Admin Gestión',
   admin_cliente: 'Admin Cliente',
   gerente: 'Gerente',
   administrativo: 'Administrativo',

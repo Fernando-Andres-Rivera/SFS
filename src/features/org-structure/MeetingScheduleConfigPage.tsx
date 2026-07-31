@@ -180,7 +180,7 @@ export function MeetingScheduleConfigPage() {
       <PageHeader
         eyebrow="Configuración · Horario"
         title="Horario de reuniones"
-        subtitle="Cada nivel tiene su propia reunión: define a qué hora empieza y qué día evalúa — una reunión de hoy no siempre revisa el dato de hoy (ej. la gerencial de la mañana puede estar evaluando el cierre de ayer). Pasada esa hora, esa fecha (y todas las anteriores) quedan cerradas para siempre para indicadores de ese nivel — no se reabren al día siguiente. Solo LeanProLogistic puede autorizar una corrección puntual, con causal, desde Captura de mediciones. Déjalo vacío si ese nivel no necesita bloqueo."
+        subtitle="Cada nivel tiene su propia reunión: define a qué hora empieza y qué día evalúa — una reunión de hoy no siempre revisa el dato de hoy (ej. la gerencial de la mañana puede estar evaluando el cierre de ayer). Pasada esa hora, esa fecha (y todas las anteriores) quedan cerradas para siempre para indicadores de ese nivel — no se reabren al día siguiente. Solo un Admin Gestión puede autorizar una corrección puntual, con causal, desde Captura de mediciones. Déjalo vacío si ese nivel no necesita bloqueo."
       />
 
       {sites.length > 0 && (

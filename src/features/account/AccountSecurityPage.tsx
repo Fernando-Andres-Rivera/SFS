@@ -111,8 +111,8 @@ export function AccountSecurityPage() {
             {profile?.role === 'admin_consultora' && (
               <>
                 {' '}
-                <strong>Es obligatoria para cuentas Admin Consultora</strong>, porque tienen acceso a todos los
-                clientes.
+                <strong>Es obligatoria para cuentas Admin Gestión</strong>, porque tienen acceso a todas las
+                organizaciones.
               </>
             )}
           </>
