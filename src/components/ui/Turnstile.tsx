@@ -41,7 +41,14 @@ export function Turnstile({ onToken, resetSignal }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | null>(null)
   const onTokenRef = useRef(onToken)
-  onTokenRef.current = onToken
+
+  // Escribir la ref durante el render rompe las garantías de React (el render
+  // debe ser puro y puede descartarse). Se sincroniza después de cada render,
+  // que es lo que necesitan los callbacks de Turnstile: se invocan siempre
+  // más tarde, nunca durante este render.
+  useEffect(() => {
+    onTokenRef.current = onToken
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -77,7 +84,6 @@ export function Turnstile({ onToken, resetSignal }: TurnstileProps) {
     }
     // Solo se monta/desmonta una vez por instancia — resetSignal se maneja
     // en el efecto de abajo para no re-crear el widget completo cada vez.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

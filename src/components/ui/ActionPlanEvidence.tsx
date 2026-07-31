@@ -35,7 +35,10 @@ function isImage(fileType: string | null): boolean {
  */
 export function ActionPlanEvidence({ actionPlanId, organizationId, uploadedBy, canRemove }: ActionPlanEvidenceProps) {
   const [items, setItems] = useState<ActionPlanEvidenceWithUrl[]>([])
-  const [loading, setLoading] = useState(true)
+  // Plan cuya carga ya terminó: "cargando" se deriva de compararlo con el
+  // pedido, en vez de un estado que hay que reponer en cada cambio de prop.
+  const [loadedActionPlanId, setLoadedActionPlanId] = useState<string | null>(null)
+  const loading = loadedActionPlanId !== actionPlanId
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,7 +49,6 @@ export function ActionPlanEvidence({ actionPlanId, organizationId, uploadedBy, c
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchActionPlanEvidence(actionPlanId)
       .then((data) => {
         if (!cancelled) setItems(data)
@@ -55,12 +57,11 @@ export function ActionPlanEvidence({ actionPlanId, organizationId, uploadedBy, c
         if (!cancelled) setError(err instanceof Error ? err.message : 'No se pudo cargar la evidencia.')
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLoadedActionPlanId(actionPlanId)
       })
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionPlanId])
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {

@@ -33,7 +33,12 @@ export function EscalatedQuickWins({
   canDeleteRecords,
 }: EscalatedQuickWinsProps) {
   const [wins, setWins] = useState<EscalatedQuickWin[]>([])
-  const [loading, setLoading] = useState(true)
+  // Combinación de props cuya carga ya terminó: "cargando" se deriva de
+  // compararla con la pedida, en vez de un estado aparte que hay que reponer
+  // en true cada vez que cambia alguna de las tres.
+  const requestKey = `${organizationId}|${level}|${siteId ?? ''}`
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
+  const loading = loadedKey !== requestKey
 
   async function reload() {
     const data = await fetchEscalatedQuickWins(organizationId, level, siteId)
@@ -42,13 +47,12 @@ export function EscalatedQuickWins({
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchEscalatedQuickWins(organizationId, level, siteId)
       .then((data) => {
         if (!cancelled) setWins(data)
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLoadedKey(`${organizationId}|${level}|${siteId ?? ''}`)
       })
     return () => {
       cancelled = true

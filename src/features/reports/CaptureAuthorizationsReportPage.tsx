@@ -26,12 +26,15 @@ export function CaptureAuthorizationsReportPage() {
   const [range, setRange] = useState(defaultRange())
   const [allRows, setAllRows] = useState<MeasurementAuthorizationRow[]>([])
   const [siteFilter, setSiteFilter] = useState('')
-  const [loading, setLoading] = useState(true)
+  // Rango cuya carga ya terminó. "Cargando" es exactamente "el rango pedido
+  // todavía no es el cargado", así que se deriva en vez de mantenerse como
+  // estado aparte que hay que volver a poner en true en cada cambio.
+  const [loadedRange, setLoadedRange] = useState<typeof range | null>(null)
+  const loading = loadedRange !== range
   const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchMeasurementAuthorizations(range)
       .then((data) => {
         if (cancelled) return
@@ -43,7 +46,7 @@ export function CaptureAuthorizationsReportPage() {
         setLoadError(err instanceof Error ? err.message : 'No se pudo cargar el reporte.')
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLoadedRange(range)
       })
     return () => {
       cancelled = true

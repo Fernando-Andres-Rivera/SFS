@@ -94,9 +94,10 @@ export function DemoSignupsReportPage() {
     }
   }
 
+  // Carga única al montar: `loading` ya arranca en true, así que no hace falta
+  // volver a ponerlo aquí.
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchDemoSignups()
       .then((data) => {
         if (cancelled) return

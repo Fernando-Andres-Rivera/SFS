@@ -30,7 +30,10 @@ function isImage(fileType: string | null): boolean {
  * propios de Quick Win. */
 export function QuickWinEvidence({ candidateId, organizationId, uploadedBy, canRemove }: QuickWinEvidenceProps) {
   const [items, setItems] = useState<QuickWinEvidenceWithUrl[]>([])
-  const [loading, setLoading] = useState(true)
+  // Candidato cuya carga ya terminó: "cargando" se deriva de comparar con el
+  // pedido, en vez de un estado que hay que reponer en cada cambio de prop.
+  const [loadedCandidateId, setLoadedCandidateId] = useState<string | null>(null)
+  const loading = loadedCandidateId !== candidateId
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -41,7 +44,6 @@ export function QuickWinEvidence({ candidateId, organizationId, uploadedBy, canR
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchQuickWinEvidence(candidateId)
       .then((data) => {
         if (!cancelled) setItems(data)
@@ -50,12 +52,11 @@ export function QuickWinEvidence({ candidateId, organizationId, uploadedBy, canR
         if (!cancelled) setError(err instanceof Error ? err.message : 'No se pudo cargar la evidencia.')
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLoadedCandidateId(candidateId)
       })
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidateId])
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {

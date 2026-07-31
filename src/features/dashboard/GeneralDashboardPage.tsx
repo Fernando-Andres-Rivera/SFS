@@ -107,7 +107,7 @@ export interface PeriodCompliance {
 
 /** Desplaza un rango de fechas N meses y/o N años (para comparar contra el
  * mismo rango del mes o del año anterior). */
-export function shiftRange(
+function shiftRange(
   range: { from: string; to: string },
   monthsDelta: number,
   yearsDelta: number,
@@ -125,7 +125,7 @@ export function shiftRange(
  * cualquiera — misma lógica que computePillarDailyResult pero sin
  * desglosar por día, para comparar el resultado total de un período contra
  * otro (mes anterior, año anterior). */
-export async function fetchPeriodCompliance(
+async function fetchPeriodCompliance(
   indicatorIds: string[],
   indicatorById: Map<string, Indicator>,
   range: { from: string; to: string },

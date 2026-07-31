@@ -51,11 +51,18 @@ export function LinkUserPage() {
   const [createdUser, setCreatedUser] = useState<InviteUserResult | null>(null)
   const [copied, setCopied] = useState(false)
 
-  const [users, setUsers] = useState<OrgUserRow[]>([])
-  const [usersLoading, setUsersLoading] = useState(true)
+  const [loadedUsers, setUsers] = useState<OrgUserRow[]>([])
   const [savingUserId, setSavingUserId] = useState<string | null>(null)
   const [userError, setUserError] = useState<string | null>(null)
   const [usersRefreshKey, setUsersRefreshKey] = useState(0)
+
+  // Sin organización elegida no hay nada que pedir ni que mostrar. "Cargando"
+  // se deriva de comparar la petición vigente con la ya resuelta, en vez de un
+  // estado que hay que reponer a mano en cada rama del efecto.
+  const usersRequestKey = selectedOrgId ? `${selectedOrgId}|${usersRefreshKey}` : ''
+  const [loadedUsersKey, setLoadedUsersKey] = useState('')
+  const usersLoading = usersRequestKey !== loadedUsersKey
+  const users = selectedOrgId ? loadedUsers : []
 
   useEffect(() => {
     if (isConsultora) fetchOrganizationsList().then(setOrganizations)
@@ -73,13 +80,8 @@ export function LinkUserPage() {
   }, [selectedOrgId])
 
   useEffect(() => {
+    if (!selectedOrgId) return
     let cancelled = false
-    if (!selectedOrgId) {
-      setUsers([])
-      setUsersLoading(false)
-      return
-    }
-    setUsersLoading(true)
     fetchOrganizationUsers(selectedOrgId)
       .then((data) => {
         if (!cancelled) {
@@ -91,7 +93,7 @@ export function LinkUserPage() {
         if (!cancelled) setUserError(err instanceof Error ? err.message : 'No se pudo cargar la lista de usuarios.')
       })
       .finally(() => {
-        if (!cancelled) setUsersLoading(false)
+        if (!cancelled) setLoadedUsersKey(`${selectedOrgId}|${usersRefreshKey}`)
       })
     return () => {
       cancelled = true

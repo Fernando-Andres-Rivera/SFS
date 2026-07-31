@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { fetchLevelCutoffs, setLevelCutoff } from './captureCutoffsApi'
 import { fetchSites } from '../indicators/indicatorsApi'
@@ -68,14 +68,25 @@ export function MeetingScheduleConfigPage() {
   const [allCutoffs, setAllCutoffs] = useState<LevelCaptureCutoff[]>([])
   const [sites, setSites] = useState<Site[]>([])
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
-  const [drafts, setDrafts] = useState<Record<number, Draft>>({})
   const [savingLevel, setSavingLevel] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   // El horario general (site_id nulo) siempre aplica de fallback cuando el
   // sitio elegido no tiene uno propio configurado para ese nivel.
   const generalCutoffs = allCutoffs.filter((c) => c.site_id === null)
-  const cutoffsForSelected = allCutoffs.filter((c) => c.site_id === selectedSiteId)
+  const cutoffsForSelected = useMemo(
+    () => allCutoffs.filter((c) => c.site_id === selectedSiteId),
+    [allCutoffs, selectedSiteId],
+  )
+
+  // El formulario arranca desde lo guardado y el usuario lo va editando. En
+  // vez de copiar lo guardado al estado con un efecto, las ediciones se
+  // guardan atadas a la versión de la que partieron: si cambia el sitio o se
+  // recargan los horarios, `baseDrafts` es otro objeto y las ediciones viejas
+  // dejan de aplicar solas, sin necesidad de reponer nada a mano.
+  const baseDrafts = useMemo(() => draftsFromCutoffs(cutoffsForSelected), [cutoffsForSelected])
+  const [edits, setEdits] = useState<{ base: Record<number, Draft>; values: Record<number, Draft> } | null>(null)
+  const drafts = edits && edits.base === baseDrafts ? edits.values : baseDrafts
 
   async function loadAll() {
     if (!organizationId) return
@@ -97,21 +108,22 @@ export function MeetingScheduleConfigPage() {
     }
   }, [organizationId])
 
-  useEffect(() => {
-    setDrafts(draftsFromCutoffs(cutoffsForSelected))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSiteId, allCutoffs])
-
   function updateDraft(level: number, patch: Partial<Draft>) {
-    setDrafts((d) => ({
-      ...d,
-      [level]: {
-        time: d[level]?.time ?? '',
-        offset: d[level]?.offset ?? 0,
-        weekdays: d[level]?.weekdays ?? DEFAULT_WEEKDAYS,
-        ...patch,
-      },
-    }))
+    setEdits((current) => {
+      const from = current && current.base === baseDrafts ? current.values : baseDrafts
+      return {
+        base: baseDrafts,
+        values: {
+          ...from,
+          [level]: {
+            time: from[level]?.time ?? '',
+            offset: from[level]?.offset ?? 0,
+            weekdays: from[level]?.weekdays ?? DEFAULT_WEEKDAYS,
+            ...patch,
+          },
+        },
+      }
+    })
   }
 
   function toggleWeekday(level: number, day: number) {
