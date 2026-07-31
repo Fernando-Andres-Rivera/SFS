@@ -233,10 +233,16 @@ Checklist por cliente. No se salta ningún paso.
 - [ ] Registrar la URL en Supabase → Authentication → URL Configuration
       (Site URL y Redirect URLs).
 - [ ] **Cloudflare Turnstile propio para este dominio** (ver DEPLOYMENT.md
-      §3.1): crear el widget, poner la sitekey en `VITE_TURNSTILE_SITE_KEY` y
-      la secret key en Supabase → Authentication → Attack Protection. **Sin
-      esto el botón de login queda deshabilitado — es bloqueante, no
-      opcional.**
+      §3.1): crear el widget en modo *Managed* registrando **todos** los
+      dominios estables de Vercel, poner la sitekey en
+      `VITE_TURNSTILE_SITE_KEY` y la secret key en Supabase → Authentication
+      → Attack Protection. **Sin esto el botón de login queda deshabilitado —
+      es bloqueante, no opcional.**
+- [ ] **Redesplegar después de fijar la sitekey.** Vite hornea las `VITE_*` en
+      el build: guardar la variable en Vercel no cambia el despliegue vigente.
+- [ ] Verificar con un **login real** en el dominio de producción. Es la única
+      prueba de que las dos llaves quedaron bien puestas; la UI se ve idéntica
+      si la secret key falta en Supabase.
 
 ### 3.5 Puesta a punto funcional
 
