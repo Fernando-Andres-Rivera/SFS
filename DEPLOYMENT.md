@@ -8,10 +8,19 @@ y se sirven desde Vercel. Toda la seguridad vive en las políticas RLS de Supaba
 > **independiente**: repositorio de GitHub propio ✅, proyecto de Supabase
 > propio ✅ (55 migraciones aplicadas, verificadas contra la base), 3 Edge
 > Functions desplegadas ✅, proyecto de Vercel propio ✅, widget de
-> **Cloudflare Turnstile propio creado** ✅ (§3.1). Falta confirmar que sus dos
-> llaves estén colocadas — sitekey en Vercel, secret key en Supabase — con un
-> login real contra `sfs-lime.vercel.app`; hasta entonces el botón de ingresar
-> puede seguir deshabilitado.
+> **Cloudflare Turnstile propio creado** ✅ (§3.1), secret key de Turnstile
+> puesta en Supabase ✅ (verificado: el servidor rechaza con `captcha_failed`
+> todo intento sin token válido).
+>
+> ⛔ **El despliegue no arranca todavía: faltan las variables de entorno en
+> Vercel** (§3). Verificado descargando los cinco chunks de
+> `sfs-lime.vercel.app`: ninguno contiene la URL de Supabase ni la sitekey de
+> Turnstile, y el chunk de la app sí trae el texto *"Faltan las variables"* —
+> el error que lanza `src/lib/supabase.ts` al cargar. En producción eso es
+> pantalla en blanco, no un formulario que falla.
+>
+> ⚠️ **En local, con el `.env` de este repo, tampoco se puede entrar** — ver la
+> nota de desarrollo local al final de §3.1.
 >
 > **Lo único que SFS todavía comparte con LPMS es la cuenta de Vercel** — ver
 > §2. No comparten base de datos, repositorio ni widget de Turnstile.
@@ -55,7 +64,18 @@ funcionen.
 >    Es la separación real (facturación y accesos aparte). Implica reconfigurar
 >    variables de entorno y volver a registrar dominios en Turnstile y Supabase.
 
-## 3. Configurar las variables de entorno en Vercel
+## 3. Configurar las variables de entorno en Vercel — ⛔ pendiente
+
+**Este es el paso que hoy tiene el despliegue caído.** Ninguna de las cuatro
+variables está puesta en el proyecto `sfs`, así que el build publicado no sabe
+a qué Supabase hablar y muere al cargar.
+
+Cómo comprobarlo sin entrar al panel — si algún chunk trae la URL del proyecto,
+las variables están puestas:
+
+```bash
+curl -s --compressed https://sfs-lime.vercel.app/assets/index-*.js | grep -o 'https://[a-z0-9]*\.supabase\.co' | head -1
+```
 
 En **Project Settings → Environment Variables**, agrega las del **proyecto de
 Supabase propio de SFS** (no las de LPMS):
@@ -68,7 +88,9 @@ Supabase propio de SFS** (no las de LPMS):
 | `VITE_TURNSTILE_SITE_KEY` | sitekey del widget Turnstile de **esta** instancia — ver sección siguiente |
 
 Marca las cuatro para los entornos **Production**, **Preview** y **Development**.
-Luego **Deploy**.
+Luego **redesplegar**: Vite hornea las `VITE_*` durante el build, así que
+guardar las variables **no cambia el despliegue vigente**. Hasta el redespliegue
+la app sigue publicada exactamente igual de rota.
 
 `VITE_APP_URL` es el único lugar donde vive la dirección pública de la app: se
 usa en el texto de credenciales que se copia al crear un usuario o un registro
@@ -98,12 +120,39 @@ Pasos, por instancia:
    configurados, un intento de login sin token válido lo rechaza también
    Supabase Auth, no solo la UI.
 
-**Para desarrollo local**, Cloudflare publica sitekeys de prueba que pasan
-siempre en cualquier dominio (documentadas en su
-[página de testing](https://developers.cloudflare.com/turnstile/troubleshooting/testing/)) —
-**nunca usarlas en producción**, porque no filtran nada. El `.env` local de este
-repo usa una de ellas a propósito: la sitekey real de abajo está atada a los
-dominios de Vercel y rechazaría `localhost`.
+### Desarrollo local: la sitekey de prueba **no** sirve aquí
+
+Cloudflare publica sitekeys de prueba que pasan siempre en cualquier dominio
+(su [página de testing](https://developers.cloudflare.com/turnstile/troubleshooting/testing/)),
+y el `.env` de este repo trae una (`1x00000000000000000000AA`). **Desde que la
+secret key real está puesta en Supabase, esa combinación no funciona**: el
+token de una sitekey de prueba solo valida contra la *secret key* de prueba que
+le corresponde. Contra la real, Cloudflare responde `invalid-input-response` y
+Supabase rechaza la petición.
+
+El síntoma engaña: el widget se pinta en verde y el botón se habilita, porque
+eso lo decide el navegador. Es el servidor el que rechaza, y la app muestra
+*"No se pudo verificar la seguridad de este intento. Recarga la página"* —
+mensaje correcto para un fallo real, pero aquí recargar no arregla nada, porque
+no es transitorio sino un par de llaves que no coinciden. Afecta por igual a
+**login, registro y recuperación de contraseña**: toda operación de auth.
+
+Comprobarlo desde la terminal (no crea nada, es un login con credenciales
+falsas):
+
+```bash
+curl -s -X POST -H "apikey: $VITE_SUPABASE_ANON_KEY" -H "Content-Type: application/json" -d '{"email":"sonda@example.invalid","password":"x"}' "$VITE_SUPABASE_URL/auth/v1/token?grant_type=password"
+```
+
+Si responde `captcha_failed`, la protección está activa y exige un token válido.
+
+**La salida limpia**: en Cloudflare → Turnstile → widget de SFS, agregar
+`localhost` a la lista de hostnames, y poner la **sitekey real** en el `.env`
+local. Así desarrollo y producción usan el mismo par de llaves.
+
+Lo que **no** conviene hacer: poner la secret key de prueba en Supabase, o
+apagar la protección CAPTCHA mientras se desarrolla. Las dos cosas son globales
+al proyecto — dejarían producción sin protección para arreglar local.
 
 ### El widget de esta instancia (SFS)
 
