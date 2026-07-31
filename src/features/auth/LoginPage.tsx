@@ -71,13 +71,22 @@ export function LoginPage() {
         return
       }
       setSubmitting(true)
-      const { error, code, alreadyRegistered } = await signUp(email.trim(), password, fullName.trim(), captchaToken)
+      const { error, code, alreadyRegistered, signedIn } = await signUp(
+        email.trim(),
+        password,
+        fullName.trim(),
+        captchaToken,
+      )
       setSubmitting(false)
       setCaptchaResetSignal((k) => k + 1)
       if (error) {
         setError(describeAuthError('register', code, error))
       } else if (alreadyRegistered) {
         setError(describeAuthError('register', 'user_already_exists', 'Ya existe una cuenta con este correo.'))
+      } else if (signedIn) {
+        // Sin confirmación por correo: ya hay sesión, así que el <Navigate>
+        // de arriba entra al entorno de prueba en el siguiente render.
+        setSuccess('Cuenta creada. Entrando a tu entorno de prueba…')
       } else {
         setSuccess(
           `Te enviamos un correo a ${email.trim()} para confirmar tu cuenta y entrar a tu entorno de prueba. ` +
@@ -220,15 +229,21 @@ export function LoginPage() {
 
           <div className="login-switch">
             {mode === 'login' && (
-              // El autorregistro público (modo 'register') queda sin botón por
-              // ahora: sin SMTP propio, Supabase ni siquiera entrega el correo
-              // de confirmación a nadie fuera del equipo de la organización. El
-              // formulario y el flujo siguen intactos para reactivarlo apenas
-              // se configure un proveedor de correo — mientras tanto, admin_
-              // consultora crea los registros Demo desde "Registros Demo".
-              <button type="button" className="login-link" onClick={() => switchMode('forgot')}>
-                ¿Olvidaste tu contraseña?
-              </button>
+              // El autorregistro público depende de un ajuste que vive en
+              // Supabase, no aquí: con "Confirm email" apagado (Authentication
+              // → Providers → Email) la cuenta queda usable al instante. Si
+              // alguien vuelve a encenderlo sin configurar SMTP propio,
+              // Supabase no entrega el correo de confirmación a nadie fuera
+              // del equipo del proyecto y el registro deja de servir para un
+              // prospecto — el mensaje de éxito distingue los dos casos.
+              <>
+                <button type="button" className="login-link" onClick={() => switchMode('register')}>
+                  Crear una cuenta de prueba
+                </button>
+                <button type="button" className="login-link" onClick={() => switchMode('forgot')}>
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </>
             )}
             {mode !== 'login' && (
               <button type="button" className="login-link" onClick={() => switchMode('login')}>

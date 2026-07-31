@@ -34,13 +34,16 @@ export interface AuthContextValue {
    * aprovisiona con una organización Demo propia. Con confirmación de correo
    * activa, no devuelve sesión hasta que el usuario confirma.
    * `alreadyRegistered` es true cuando Supabase respondió "éxito" pero en
-   * realidad el correo ya tenía cuenta y no mandó nada (ver AuthContext). */
+   * realidad el correo ya tenía cuenta y no mandó nada (ver AuthContext).
+   * `signedIn` es true cuando la confirmación por correo está apagada y la
+   * cuenta quedó usable de una vez — sirve para no anunciar un correo que
+   * nunca se envió. */
   signUp: (
     email: string,
     password: string,
     fullName: string,
     captchaToken?: string,
-  ) => Promise<{ error: string | null; code?: string; alreadyRegistered?: boolean }>
+  ) => Promise<{ error: string | null; code?: string; alreadyRegistered?: boolean; signedIn?: boolean }>
   /** Envía el correo de recuperación de contraseña. */
   resetPassword: (email: string, captchaToken?: string) => Promise<{ error: string | null; code?: string }>
   signOut: () => Promise<void>

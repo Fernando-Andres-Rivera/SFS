@@ -136,7 +136,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // nada. La única señal para distinguirlo: el user "fantasma" que
     // devuelve no trae ninguna identity (una cuenta nueva sí trae una).
     const alreadyRegistered = !error && (data.user?.identities?.length ?? 0) === 0
-    return { error: error?.message ?? null, code: error?.code, alreadyRegistered }
+    // Con "Confirm email" apagado en Supabase, signUp() devuelve sesión de
+    // una vez y no manda ningún correo; con la confirmación puesta, no hay
+    // sesión hasta que el usuario abra el enlace. Se reporta cuál de los dos
+    // pasó para no prometerle un correo que nunca va a llegar.
+    return {
+      error: error?.message ?? null,
+      code: error?.code,
+      alreadyRegistered,
+      signedIn: !!data.session,
+    }
   }
 
   async function resetPassword(email: string, captchaToken?: string) {
